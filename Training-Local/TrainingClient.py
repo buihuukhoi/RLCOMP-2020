@@ -36,7 +36,7 @@ MEMORY_SIZE = 100000 # tang dan -->>>>  # The size of the batch for storing expe
 SAVE_NETWORK = 100 #After this number of episodes, the DQN model is saved for testing later.
 INITIAL_REPLAY_SIZE = 1000 #The number of experiences are stored in the memory batch before starting replaying
 INPUT_SHAPE_1 = (21, 9, 3)  # The number of input values for the DQN model
-INPUT_SHAPE_2 = 24
+INPUT_SHAPE_2 = (24,)
 ACTIONNUM = 6  # The number of actions output from the DQN model
 MAP_MAX_X = 21 #Width of the Map
 MAP_MAX_Y = 9  #Height of the Map
@@ -68,21 +68,21 @@ for episode_i in range(0, N_EPISODE):
 
         # Getting the initial state
         minerEnv.reset()  # Initialize the game environment
-        state = minerEnv.get_state()  # Get the state after reseting.
+        state_map, state_users = minerEnv.get_state()  # Get the state after reseting.
         # This function (get_state()) is an example of creating a state for the DQN model
         episode_reward = 0  # The amount of rewards for the entire episode
         terminate = False  # The variable indicates that the episode ends
         maxStep = minerEnv.state.mapInfo.maxStep  # Get the maximum number of steps for each episode in training
         # Start an episode for training
         for step in range(0, maxStep):
-            action = DQNAgent.act(state)  # Getting an action from the DQN model from the state (s)
+            action = DQNAgent.act(state_map, state_users)  # Getting an action from the DQN model from the state (s)
             minerEnv.step(str(action))  # Performing the action in order to obtain the new state
             reward = minerEnv.get_reward()  # Getting a reward
-            new_state = minerEnv.get_state()  # Getting a new state
+            new_state_map, new_state_users = minerEnv.get_state()  # Getting a new state
             terminate = minerEnv.check_terminate()  # Checking the end status of the episode
 
             # Add this transition to the memory batch
-            memory.push(state, action, reward, new_state, terminate)
+            memory.push(state_map, state_users, action, reward, new_state_map, new_state_users, terminate)
 
             # Sample batch memory to train network
             if memory.length > INITIAL_REPLAY_SIZE:
@@ -92,7 +92,8 @@ for episode_i in range(0, N_EPISODE):
                 DQNAgent.replay(batch, BATCH_SIZE)  # Do relaying
                 train = True  # Indicate the training starts
             episode_reward += reward  # Plus the reward to the total reward of the episode
-            state = new_state  # Assign the next state for the next step.
+            state_map = new_state_map  # Assign the next state for the next step.
+            state_users = new_state_users  # Assign the next state for the next step.
 
             # check again, when we need to save ?????????????????????????????????????????????????????
             # Saving data to file
@@ -117,7 +118,7 @@ for episode_i in range(0, N_EPISODE):
                                 "DQNmodel_" + now.strftime("%Y%m%d-%H%M") + "_ep" + str(episode_i + 1))
 
         # Print the training information after the episode
-        print('Episode %d ends. Number of steps is: %d. Accumulated Reward = %.2f. Epsilon = %.2f .Termination code: %d' % (
+        print('Episode %d ends. Number of steps is: %d. Accumulated Reward = %.4f. Epsilon = %.2f .Termination code: %d' % (
             episode_i + 1, step + 1, episode_reward, DQNAgent.epsilon, terminate))
 
         # Decreasing the epsilon if the replay starts

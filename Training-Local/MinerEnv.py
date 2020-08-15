@@ -104,8 +104,8 @@ class MinerEnv:
         view_2[index_player * 6 + 5] = self.state.status / max_status
 
         for player in self.state.players:
-            index_player += 1
             if player["playerId"] != self.state.id:
+                index_player += 1
                 view_2[index_player * 6 + 0] = player["posx"] / max_x
                 view_2[index_player * 6 + 1] = player["posy"] / max_y
                 if "energy" in player:  # > 1 step
@@ -120,9 +120,10 @@ class MinerEnv:
                     view_2[index_player * 6 + 5] = self.state.STATUS_PLAYING / max_status
 
         # Convert the DQNState from list to array for training
-        DQNState = np.array([view_1, view_2])
-
-        return DQNState
+        DQNState_map = np.array(view_1)
+        DQNState_users = np.array(view_2)
+        
+        return DQNState_map, DQNState_users
 
     def get_reward(self):
     	# return -0.01 ~ 0.01

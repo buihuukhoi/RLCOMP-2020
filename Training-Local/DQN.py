@@ -4,7 +4,7 @@
 import numpy as np
 from keras.models import Sequential, Model
 from keras.models import model_from_json
-from keras.layers import Dense, Dropout, Conv2D, MaxPooling2D, Activation, Flatten, Input, Concatenate
+from keras.layers import Dense, Dropout, Conv2D, MaxPooling2D, Activation, Flatten, Input, Concatenate, concatenate
 from keras import optimizers
 from keras import backend as K
 import tensorflow as tf
@@ -14,7 +14,7 @@ class DQN:
     def __init__(
             self,
             input_shape_1=(21, 9, 2),  # The number of inputs for the DQN network
-            input_shape_2=24,
+            input_shape_2=(24,),
             action_space=6,  # The number of actions for the DQN network
             gamma=0.99,  # The discount factor
             epsilon=1,  # Epsilon - the exploration factor
@@ -47,19 +47,23 @@ class DQN:
         self.sess.run(tf.compat.v1.global_variables_initializer())
 
     def create_model(self):
-        x1 = Input(shape=self.input_shape_1)
-        x1 = Conv2D(256, (3, 3), activation="relu")(x1)
-        x1 = Conv2D(256, (3, 3), activation="relu")(x1)
-        flatten_1 = Flatten()(x1)
+        x1 = Input(shape=self.input_shape_1, name="state_map")
+        conv = Conv2D(256, (3, 3), activation="relu")(x1)
+        conv = Conv2D(256, (3, 3), activation="relu")(conv)
+        flatten_1 = Flatten()(conv)
 
-        x2 = Input(shape=self.input_shape_2)
-        flatten_2 = Flatten()(x2)
+        x2 = Input(shape=self.input_shape_2, name="state_users")
+        #flatten_2 = Flatten()(x2)
 
-        concat = Concatenate()([flatten_1, flatten_2])
-        d = Dense(10)(concat)
+        #concat = Concatenate()([flatten_1, flatten_2])
+        concat = concatenate([flatten_1, x2])
+        d = Dense(64, activation='relu')(concat)
+        d = Dense(self.action_space, activation="linear")(d)
 
-        model = Model(inputs=[x1, x2], outputs=[d])
+        model = Model(inputs=[x1, x2], outputs=d)
         model.compile(loss="mse", optimizer=optimizers.Adam(lr=0.0001), metrics=['accuracy'])
+        #print(model.summary())
+        return model
 
         """
         model = Sequential()
@@ -84,42 +88,45 @@ class DQN:
         return model
         """
 
-    def get_qs(self, state):
+    def get_qs(self, state_map, state_users):
         # check shape again ??????????????????????????
-        return self.model.predict([].append(state))
+        return self.model.predict({"state_map": state_map.reshape(1, 21, 9, 3), "state_users": state_users.reshape(1, 24)})
 
-    def act(self, state):
+    def act(self, state_map, state_users):
         # Get the index of the maximum Q values
         if random() < self.epsilon:
             action = randrange(self.action_space)
         else:
-            action = np.argmax(self.get_qs(state))
+            action = np.argmax(self.get_qs(state_map, state_users))
         return action
 
     def replay(self, samples, batch_size):
         # samples are taken randomly in Memory.sample()
-        inputs = np.zeros((batch_size, *(self.input_shape_1, self.input_shape_2)))
+        inputs_map = np.zeros((batch_size, *(self.input_shape_1)))
+        inputs_users = np.zeros((batch_size, *(self.input_shape_2)))
         targets = np.zeros((batch_size, self.action_space))
 
         for i in range(0, batch_size):
-            state = samples[0][i]
-            action = samples[1][i]
-            reward = samples[2][i]
-            new_state = samples[3][i]
-            done = samples[4][i]
+            state_map = samples[0][i]
+            state_users = samples[1][i]
+            action = samples[2][i]
+            reward = samples[3][i]
+            new_state_map = samples[4][i]
+            new_state_users = samples[5][i]
+            done = samples[6][i]
 
-            inputs[i] = state
+            # inputs[i] = state
             # check input shape again ?????????????????????????????????????????????????????????
-            targets[i, :] = self.target_model.predict([].append(state))
+            targets[i, :] = self.target_model.predict({"state_map": state_map.reshape(1, 21, 9, 3), "state_users": state_users.reshape(1, 24)})
             # targets[i, :] = self.get_qs(state)
             if done:
                 targets[i, action] = reward  # if terminated ==> no new_state ==> only equals reward
             else:
                 # check input shape again ?????????????????????????????????????????????????????????
-                max_future_qs = np.max(self.target_model.predict([].append(new_state)))
+                max_future_qs = np.max(self.target_model.predict({"state_map": new_state_map.reshape(1, 21, 9, 3), "state_users": new_state_users.reshape(1, 24)}))
                 targets[i, action] = reward + self.gamma * max_future_qs
         # Training
-        loss = self.model.train_on_batch(inputs, targets)
+        loss = self.model.train_on_batch({"state_map": inputs_map, "state_users": inputs_users}, targets)
 
     def update_target_model(self):
         weights = self.model.get_weights()
