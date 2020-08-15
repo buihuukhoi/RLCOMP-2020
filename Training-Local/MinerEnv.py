@@ -44,91 +44,105 @@ class MinerEnv:
 
     # Functions are customized by client
     def get_state(self):
-        depth = 3  # goal, energy, player's information
+        depth = 3  # goal, min_energy, max_energy
         goal_depth = 0
-        energy_depth = 1
-        players_depth = 2
+        min_energy_depth = 1
+        max_energy_depth = 1
 
-        max_energy = 100
+        len_player_infor = 6 * 4
+
         max_goal = 67 * 50 * 4  # assume 67 steps for mining and 33 steps for relaxing
+        max_energy = 100
 
         max_x = self.state.mapInfo.max_x
         max_y = self.state.mapInfo.max_y
         max_player_energy = 50
         max_score = 67 * 50
-        max_lastAction = 6
+        max_lastAction = 6 + 1  # +1 because of None
         max_status = 5
 
         # Building the map
-        view = np.zeros([self.state.mapInfo.max_x + 1, self.state.mapInfo.max_y + 1, depth], dtype=float)
+        view_1 = np.zeros([self.state.mapInfo.max_x + 1, self.state.mapInfo.max_y + 1, depth], dtype=float)
         for i in range(self.state.mapInfo.max_x + 1):
             for j in range(self.state.mapInfo.max_y + 1):
-                view[i, j, energy_depth] = 1 / max_energy
-                if self.state.mapInfo.get_obstacle(i, j) == TreeID:  # Tree
-                    view[i, j, energy_depth] = 15 / max_energy  # 5~20
-                elif self.state.mapInfo.get_obstacle(i, j) == TrapID:  # Trap
-                    view[i, j, energy_depth] = 10 / max_energy
-                elif self.state.mapInfo.get_obstacle(i, j) == SwampID:  # Swamp
-                    view[i, j, energy_depth] = 5 / max_energy  # 5, 20, 50, 100 ??????? we can get that value
+                view_1[i, j, min_energy_depth] = 1 / max_energy
+                view_1[i, j, max_energy_depth] = 1 / max_energy
 
-                if self.state.mapInfo.gold_amount(i, j) > 0:
-                    view[i, j, energy_depth] = 4 / max_energy
-                    view[i, j, goal_depth] = self.state.mapInfo.gold_amount(i, j) / max_goal
+        for obstacle in self.state.mapInfo.obstacles:
+            i = obstacle["posx"]
+            j = obstacle["posy"]
+            if obstacle["type"] == TreeID:  # Tree
+                view_1[i, j, min_energy_depth] = 5 / max_energy  # 5~20
+                view_1[i, j, max_energy_depth] = 20 / max_energy  # 5~20
+            elif obstacle["type"] == TrapID:  # Trap
+                view_1[i, j, min_energy_depth] = 10 / max_energy
+                view_1[i, j, max_energy_depth] = 10 / max_energy
+            elif obstacle["type"] == SwampID:  # Swamp
+                view_1[i, j, min_energy_depth] = obstacle["value"] / max_energy  # 5, 20, 50, 100
+                view_1[i, j, max_energy_depth] = obstacle["value"] / max_energy  # 5, 20, 50, 100
+
+        for goal in self.state.mapInfo.golds:
+            i = goal["posx"]
+            j = goal["posy"]
+            view_1[i, j, min_energy_depth] = 4 / max_energy
+            view_1[i, j, max_energy_depth] = 4 / max_energy
+            view_1[i, j, goal_depth] = goal["amount"] / max_goal
 
         # Add player's information
+        view_2 = np.zeros([len_player_infor], dtype=float)
+
         index_player = 0
 
-        view[index_player, 0, players_depth] = self.state.x / max_x
-        view[index_player, 1, players_depth] = self.state.y / max_y
-        view[index_player, 2, players_depth] = self.state.energy / max_player_energy
-        view[index_player, 3, players_depth] = self.state.score / max_score
-        if self.state.lastAction is None:
-            view[index_player, 4, players_depth] = (max_lastAction + 1) / max_lastAction
-        else:
-            view[index_player, 4, players_depth] = self.state.lastAction / max_lastAction
-        view[index_player, 5, players_depth] = self.state.status / max_status
+        view_2[index_player * 6 + 0] = self.state.x / max_x
+        view_2[index_player * 6 + 1] = self.state.y / max_y
+        view_2[index_player * 6 + 2] = self.state.energy / max_player_energy
+        view_2[index_player * 6 + 3] = self.state.score / max_score
+        if self.state.lastAction is None:  # 0 step
+            view_2[index_player * 6 + 4] = max_lastAction / max_lastAction
+        else:  # > 1 step
+            view_2[index_player * 6 + 4] = self.state.lastAction / max_lastAction
+        view_2[index_player * 6 + 5] = self.state.status / max_status
 
-        index_player += 1
         for player in self.state.players:
+            index_player += 1
             if player["playerId"] != self.state.id:
-                view[index_player, 0, players_depth] = player["posx"] / max_x
-                view[index_player, 1, players_depth] = player["posy"] / max_y
-                if "energy" in player:
-                    view[index_player, 2, players_depth] = player["energy"] / max_player_energy
-                    view[index_player, 3, players_depth] = player["score"] / max_score
-                    view[index_player, 4, players_depth] = player["lastAction"] / max_lastAction  # one hot
-                    view[index_player, 5, players_depth] = player["status"] / max_status
-                else:
-                    view[index_player, 2, players_depth] = 50 / max_player_energy
-                    view[index_player, 3, players_depth] = 0 / max_score
-                    view[index_player, 4, players_depth] = (max_lastAction + 1) / max_lastAction  # one hot
-                    view[index_player, 5, players_depth] = self.state.STATUS_PLAYING / max_status
-                    
-                index_player += 1
+                view_2[index_player * 6 + 0] = player["posx"] / max_x
+                view_2[index_player * 6 + 1] = player["posy"] / max_y
+                if "energy" in player:  # > 1 step
+                    view_2[index_player * 6 + 2] = player["energy"] / max_player_energy
+                    view_2[index_player * 6 + 3] = player["score"] / max_score
+                    view_2[index_player * 6 + 4] = player["lastAction"] / max_lastAction  # one hot
+                    view_2[index_player * 6 + 5] = player["status"] / max_status
+                else:  # 0 step, initial state
+                    view_2[index_player * 6 + 2] = 50 / max_player_energy
+                    view_2[index_player * 6 + 3] = 0 / max_score
+                    view_2[index_player * 6 + 4] = max_lastAction / max_lastAction  # one hot
+                    view_2[index_player * 6 + 5] = self.state.STATUS_PLAYING / max_status
 
         # Convert the DQNState from list to array for training
-        DQNState = np.array(view)
+        DQNState = np.array([view_1, view_2])
 
         return DQNState
 
     def get_reward(self):
-	# return -0.01 ~ 0.01
-	# reward to go to goal
+    	# return -0.01 ~ 0.01
+    	# reward to go to goal
         # define weight for goal and energy
         weight_goal = 0.5  # < 1
         weight_consumed_energy = 1 - weight_goal
 
-        reward_died = -50
+        max_reward = 50 - 4  # if not died
+        reward_died = -100
 
         # Calculate reward
         reward = 0
-        score_action = self.state.score - self.score_pre
-        energy_action = self.state.energy - self.energy_pre
+        score_action = self.state.score - self.score_pre  # >= 0
+        energy_action = self.state.energy - self.energy_pre  # < 0 if not relax
         self.score_pre = self.state.score
         self.energy_pre = self.state.energy
 
         reward += score_action * weight_goal
-        reward -= energy_action * weight_consumed_energy
+        reward += energy_action * weight_consumed_energy
 
         # If out of the map, then the DQN agent should be punished by a larger nagative reward.
         if self.state.status == State.STATUS_ELIMINATED_WENT_OUT_MAP:
@@ -138,7 +152,7 @@ class MinerEnv:
         if self.state.status == State.STATUS_ELIMINATED_OUT_OF_ENERGY:
             reward = reward_died
         # print ("reward",reward)
-        return reward
+        return reward / max_reward / self.state.mapInfo.maxStep  # 100 steps
 
     def check_terminate(self):
         # Checking the status of the game

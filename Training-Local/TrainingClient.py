@@ -35,13 +35,14 @@ BATCH_SIZE = 32 #128 # or 256  #The number of experiences for each replay
 MEMORY_SIZE = 100000 # tang dan -->>>>  # The size of the batch for storing experiences
 SAVE_NETWORK = 100 #After this number of episodes, the DQN model is saved for testing later.
 INITIAL_REPLAY_SIZE = 1000 #The number of experiences are stored in the memory batch before starting replaying
-INPUTNUM = (21, 9, 3)  # The number of input values for the DQN model
+INPUT_SHAPE_1 = (21, 9, 3)  # The number of input values for the DQN model
+INPUT_SHAPE_2 = 24
 ACTIONNUM = 6  # The number of actions output from the DQN model
 MAP_MAX_X = 21 #Width of the Map
 MAP_MAX_Y = 9  #Height of the Map
 
 # Initialize a DQN model and a memory batch for storing experiences
-DQNAgent = DQN(INPUTNUM, ACTIONNUM)
+DQNAgent = DQN(INPUT_SHAPE_1, INPUT_SHAPE_2, ACTIONNUM)
 memory = Memory(MEMORY_SIZE)
 
 # Initialize environment

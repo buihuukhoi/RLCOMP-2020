@@ -2,9 +2,9 @@
 #simplefilter(action='ignore', category=FutureWarning)
 
 import numpy as np
-from keras.models import Sequential
+from keras.models import Sequential, Model
 from keras.models import model_from_json
-from keras.layers import Dense, Dropout, Conv2D, MaxPooling2D, Activation, Flatten
+from keras.layers import Dense, Dropout, Conv2D, MaxPooling2D, Activation, Flatten, Input, Concatenate
 from keras import optimizers
 from keras import backend as K
 import tensorflow as tf
@@ -13,7 +13,8 @@ from random import random, randrange
 class DQN:
     def __init__(
             self,
-            input_shape=(21, 9, 3),  # The number of inputs for the DQN network
+            input_shape_1=(21, 9, 2),  # The number of inputs for the DQN network
+            input_shape_2=24,
             action_space=6,  # The number of actions for the DQN network
             gamma=0.99,  # The discount factor
             epsilon=1,  # Epsilon - the exploration factor
@@ -23,7 +24,8 @@ class DQN:
             tau=0.125,  # The factor for updating the DQN target network from the DQN network
             sess=None,
     ):
-        self.input_shape = input_shape
+        self.input_shape_1 = input_shape_1
+        self.input_shape_2 = input_shape_2
         self.action_space = action_space
         self.gamma = gamma
         self.epsilon = epsilon
@@ -44,7 +46,22 @@ class DQN:
         K.set_session(sess)
         self.sess.run(tf.compat.v1.global_variables_initializer())
 
-    def create_model(self):	
+    def create_model(self):
+        x1 = Input(shape=self.input_shape_1)
+        x1 = Conv2D(256, (3, 3), activation="relu")(x1)
+        x1 = Conv2D(256, (3, 3), activation="relu")(x1)
+        flatten_1 = Flatten()(x1)
+
+        x2 = Input(shape=self.input_shape_2)
+        flatten_2 = Flatten()(x2)
+
+        concat = Concatenate()([flatten_1, flatten_2])
+        d = Dense(10)(concat)
+
+        model = Model(inputs=[x1, x2], outputs=[d])
+        model.compile(loss="mse", optimizer=optimizers.Adam(lr=0.0001), metrics=['accuracy'])
+
+        """
         model = Sequential()
 
         model.add(Conv2D(256, (3, 3), input_shape=self.input_shape))
@@ -65,10 +82,11 @@ class DQN:
         # model.compile(optimizer=sgd, loss='mse')
         model.compile(loss="mse", optimizer=optimizers.Adam(lr=0.0001), metrics=['accuracy'])
         return model
+        """
 
     def get_qs(self, state):
         # check shape again ??????????????????????????
-        return self.model.predict(state.reshape(-1, 21, 9, 3))
+        return self.model.predict([].append(state))
 
     def act(self, state):
         # Get the index of the maximum Q values
@@ -80,7 +98,7 @@ class DQN:
 
     def replay(self, samples, batch_size):
         # samples are taken randomly in Memory.sample()
-        inputs = np.zeros((batch_size, *(self.input_shape)))
+        inputs = np.zeros((batch_size, *(self.input_shape_1, self.input_shape_2)))
         targets = np.zeros((batch_size, self.action_space))
 
         for i in range(0, batch_size):
@@ -92,13 +110,13 @@ class DQN:
 
             inputs[i] = state
             # check input shape again ?????????????????????????????????????????????????????????
-            targets[i, :] = self.target_model.predict(state.reshape(1, 21, 9, 3))
+            targets[i, :] = self.target_model.predict([].append(state))
             # targets[i, :] = self.get_qs(state)
             if done:
                 targets[i, action] = reward  # if terminated ==> no new_state ==> only equals reward
             else:
                 # check input shape again ?????????????????????????????????????????????????????????
-                max_future_qs = np.max(self.target_model.predict(new_state.reshape(1, 21, 9, 3)))
+                max_future_qs = np.max(self.target_model.predict([].append(new_state)))
                 targets[i, action] = reward + self.gamma * max_future_qs
         # Training
         loss = self.model.train_on_batch(inputs, targets)
