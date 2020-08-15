@@ -49,7 +49,7 @@ class MinerEnv:
         energy_depth = 1
         players_depth = 2
 
-        max_energy = 0
+        max_energy = 100
         max_goal = 67 * 50 * 4  # assume 67 steps for mining and 33 steps for relaxing
 
         max_x = self.state.mapInfo.max_x
@@ -69,7 +69,7 @@ class MinerEnv:
                 elif self.state.mapInfo.get_obstacle(i, j) == TrapID:  # Trap
                     view[i, j, energy_depth] = 10 / max_energy
                 elif self.state.mapInfo.get_obstacle(i, j) == SwampID:  # Swamp
-                    view[i, j, energy_depth] = 5 / max_energy  # 5, 20, 50, 100 ???????
+                    view[i, j, energy_depth] = 5 / max_energy  # 5, 20, 50, 100 ??????? we can get that value
 
                 if self.state.mapInfo.gold_amount(i, j) > 0:
                     view[i, j, energy_depth] = 4 / max_energy
@@ -96,8 +96,14 @@ class MinerEnv:
                 if "energy" in player:
                     view[index_player, 2, players_depth] = player["energy"] / max_player_energy
                     view[index_player, 3, players_depth] = player["score"] / max_score
-                    view[index_player, 4, players_depth] = player["lastAction"] / max_lastAction
+                    view[index_player, 4, players_depth] = player["lastAction"] / max_lastAction  # one hot
                     view[index_player, 5, players_depth] = player["status"] / max_status
+                else:
+                    view[index_player, 2, players_depth] = 50 / max_player_energy
+                    view[index_player, 3, players_depth] = 0 / max_score
+                    view[index_player, 4, players_depth] = (max_lastAction + 1) / max_lastAction  # one hot
+                    view[index_player, 5, players_depth] = self.state.STATUS_PLAYING / max_status
+                    
                 index_player += 1
 
         # Convert the DQNState from list to array for training
@@ -106,6 +112,8 @@ class MinerEnv:
         return DQNState
 
     def get_reward(self):
+	# return -0.01 ~ 0.01
+	# reward to go to goal
         # define weight for goal and energy
         weight_goal = 0.5  # < 1
         weight_consumed_energy = 1 - weight_goal

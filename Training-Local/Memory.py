@@ -25,16 +25,18 @@ class Memory:
 
     def push(self, state, action, reward, new_state, done):
         if self.states is None:
-            self.states = state
+            self.states = [state]
+            #print(f"self.states.shape = {self.states.shape}")
             self.actions = action
             self.rewards = reward
-            self.new_states = new_state
+            self.new_states = [new_state]
             self.dones = done
         else:
-            self.states = np.vstack((self.states, state))
+            self.states = np.vstack((self.states, [state]))
+            #print(f"self.states.shape = {self.states.shape}")
             self.actions = np.vstack((self.actions, action))
             self.rewards = np.vstack((self.rewards, reward))
-            self.new_states = np.vstack((self.new_states, new_state))
+            self.new_states = np.vstack((self.new_states, [new_state]))
             self.dones = np.vstack((self.dones, done))
 
         self.length = self.length + 1
@@ -50,18 +52,22 @@ class Memory:
     def sample(self, batch_size):
         if self.length >= batch_size:
             idx = random.sample(range(0, self.length), batch_size)
+            """
             state = self.states[idx, :]
             action = self.actions[idx, :]
             reward = self.rewards[idx, :]
             new_state = self.new_states[idx, :]
             done = self.dones[idx, :]
+
+            #print(f"self.states.shape = {self.states.shape}")
+
             """
             state = self.states[idx]
             action = self.actions[idx]
             reward = self.rewards[idx]
             new_state = self.new_states[idx]
             done = self.dones[idx]
-            """
+            
             return list([state, action, reward, new_state, done])
         else:
             return None

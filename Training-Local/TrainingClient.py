@@ -8,6 +8,10 @@ import datetime
 import numpy as np
 
 import matplotlib.pyplot as plt
+from matplotlib import style
+
+
+from matplotlib import style
 
 
 HOST = "localhost"
@@ -24,10 +28,11 @@ with open(filename, 'w') as f:
     pd.DataFrame(columns=header).to_csv(f, encoding='utf-8', index=False, header=True)
 
 # Parameters for training a DQN model
-N_EPISODE = 10000  # The number of episodes for training
-MAX_STEP = 1000   #The number of steps for each episode
-BATCH_SIZE = 32   #The number of experiences for each replay
-MEMORY_SIZE = 100000  # The size of the batch for storing experiences
+# N_EPISODE = 10000  # The number of episodes for training
+N_EPISODE = 1000  # The number of episodes for training
+# MAX_STEP = 1000   #The number of steps for each episode
+BATCH_SIZE = 32 #128 # or 256  #The number of experiences for each replay
+MEMORY_SIZE = 100000 # tang dan -->>>>  # The size of the batch for storing experiences
 SAVE_NETWORK = 100 #After this number of episodes, the DQN model is saved for testing later.
 INITIAL_REPLAY_SIZE = 1000 #The number of experiences are stored in the memory batch before starting replaying
 INPUTNUM = (21, 9, 3)  # The number of input values for the DQN model

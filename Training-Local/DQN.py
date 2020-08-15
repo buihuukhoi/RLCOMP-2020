@@ -44,31 +44,31 @@ class DQN:
         K.set_session(sess)
         self.sess.run(tf.compat.v1.global_variables_initializer())
 
-    def create_model(self):
+    def create_model(self):	
         model = Sequential()
 
         model.add(Conv2D(256, (3, 3), input_shape=self.input_shape))
         model.add(Activation("relu"))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Dropout(0.2))
+        #model.add(MaxPooling2D(pool_size=(2,2), strides=(2,2), padding='same'))
+        #model.add(Dropout(0.2))
 
         model.add(Conv2D(256, (3, 3)))
         model.add(Activation("relu"))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Dropout(0.2))
+        #model.add(MaxPooling2D(pool_size=(2,2), strides=(2,2), padding='same'))
+        #model.add(Dropout(0.2))
 
         model.add(Flatten())
-        model.add(Dense(64))
+        model.add(Dense(64, activation="relu"))
 
         model.add(Dense(self.action_space, activation="linear"))
         # sgd = optimizers.SGD(lr=self.learning_rate, decay=1e-6, momentum=0.95)
         # model.compile(optimizer=sgd, loss='mse')
-        model.compile(loss="mse", optimizer=optimizers.Adam(lr=0.001), metrics=['accuracy'])
+        model.compile(loss="mse", optimizer=optimizers.Adam(lr=0.0001), metrics=['accuracy'])
         return model
 
     def get_qs(self, state):
         # check shape again ??????????????????????????
-        return self.model.predict(state)
+        return self.model.predict(state.reshape(-1, 21, 9, 3))
 
     def act(self, state):
         # Get the index of the maximum Q values
@@ -80,25 +80,25 @@ class DQN:
 
     def replay(self, samples, batch_size):
         # samples are taken randomly in Memory.sample()
-        inputs = np.zeros((batch_size, self.input_shape))
+        inputs = np.zeros((batch_size, *(self.input_shape)))
         targets = np.zeros((batch_size, self.action_space))
 
         for i in range(0, batch_size):
-            state = samples[0][i, :]
+            state = samples[0][i]
             action = samples[1][i]
             reward = samples[2][i]
-            new_state = samples[3][i, :]
+            new_state = samples[3][i]
             done = samples[4][i]
 
-            inputs[i, :] = state
+            inputs[i] = state
             # check input shape again ?????????????????????????????????????????????????????????
-            targets[i, :] = self.target_model.predict(state)
+            targets[i, :] = self.target_model.predict(state.reshape(1, 21, 9, 3))
             # targets[i, :] = self.get_qs(state)
             if done:
                 targets[i, action] = reward  # if terminated ==> no new_state ==> only equals reward
             else:
                 # check input shape again ?????????????????????????????????????????????????????????
-                max_future_qs = np.max(self.target_model.predict(new_state))
+                max_future_qs = np.max(self.target_model.predict(new_state.reshape(1, 21, 9, 3)))
                 targets[i, action] = reward + self.gamma * max_future_qs
         # Training
         loss = self.model.train_on_batch(inputs, targets)
