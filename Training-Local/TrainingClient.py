@@ -7,6 +7,8 @@ import pandas as pd
 import datetime
 import numpy as np
 
+import matplotlib.pyplot as plt
+
 
 HOST = "localhost"
 PORT = 1111
@@ -16,7 +18,7 @@ if len(sys.argv) == 3:
 
 # Create header for saving DQN learning file
 now = datetime.datetime.now() #Getting the latest datetime
-header = ["Ep", "Step", "Reward", "Total_reward", "Action", "Epsilon", "Done", "Termination_Code"] #Defining header for the save file
+header = ["Ep", "Step", "Reward", "Episode_Reward", "Action", "Epsilon", "Done", "Termination_Code"] #Defining header for the save file
 filename = "Data/data_" + now.strftime("%Y%m%d-%H%M") + ".csv"
 with open(filename, 'w') as f:
     pd.DataFrame(columns=header).to_csv(f, encoding='utf-8', index=False, header=True)
@@ -45,6 +47,8 @@ train = False #The variable is used to indicate that the replay starts, and the 
 #Training Process
 #the main part of the deep-q learning agorithm
 
+episode_rewards = []
+
 for episode_i in range(0, N_EPISODE):
     try:
         # Choosing a map in the list
@@ -60,7 +64,7 @@ for episode_i in range(0, N_EPISODE):
         minerEnv.reset()  # Initialize the game environment
         state = minerEnv.get_state()  # Get the state after reseting.
         # This function (get_state()) is an example of creating a state for the DQN model
-        total_reward = 0  # The amount of rewards for the entire episode
+        episode_reward = 0  # The amount of rewards for the entire episode
         terminate = False  # The variable indicates that the episode ends
         maxStep = minerEnv.state.mapInfo.maxStep  # Get the maximum number of steps for each episode in training
         # Start an episode for training
@@ -72,7 +76,7 @@ for episode_i in range(0, N_EPISODE):
             terminate = minerEnv.check_terminate()  # Checking the end status of the episode
 
             # Add this transition to the memory batch
-            memory.push(state, action, reward, s_next, terminate)
+            memory.push(state, action, reward, new_state, terminate)
 
             # Sample batch memory to train network
             if memory.length > INITIAL_REPLAY_SIZE:
@@ -81,13 +85,13 @@ for episode_i in range(0, N_EPISODE):
                 batch = memory.sample(BATCH_SIZE)  # Get a BATCH_SIZE experiences for replaying
                 DQNAgent.replay(batch, BATCH_SIZE)  # Do relaying
                 train = True  # Indicate the training starts
-            total_reward += reward  # Plus the reward to the total reward of the episode
+            episode_reward += reward  # Plus the reward to the total reward of the episode
             state = new_state  # Assign the next state for the next step.
 
             # check again, when we need to save ?????????????????????????????????????????????????????
             # Saving data to file
             save_data = np.hstack(
-                [episode_i + 1, step + 1, reward, total_reward, action, DQNAgent.epsilon, terminate]).reshape(1, 7)
+                [episode_i + 1, step + 1, reward, episode_reward, action, DQNAgent.epsilon, terminate]).reshape(1, 7)
             with open(filename, 'a') as f:
                 pd.DataFrame(save_data).to_csv(f, encoding='utf-8', index=False, header=False)
 
@@ -95,9 +99,11 @@ for episode_i in range(0, N_EPISODE):
                 # If the episode ends, then go to the next episode
                 break
 
+        episode_rewards.append(episode_reward)
+
         # check again ??????????????????????????????????????????????????????????
         # Iteration to save the network architecture and weights
-        if (np.mod(episode_i + 1, SAVE_NETWORK) == 0 and train == True):
+        if np.mod(episode_i + 1, SAVE_NETWORK) == 0 and train == True:
             DQNAgent.update_target_model()  # Replace the learning weights for target model with soft replacement
             # Save the DQN model
             now = datetime.datetime.now()  # Get the latest datetime
@@ -106,7 +112,7 @@ for episode_i in range(0, N_EPISODE):
 
         # Print the training information after the episode
         print('Episode %d ends. Number of steps is: %d. Accumulated Reward = %.2f. Epsilon = %.2f .Termination code: %d' % (
-            episode_i + 1, step + 1, total_reward, DQNAgent.epsilon, terminate))
+            episode_i + 1, step + 1, episode_reward, DQNAgent.epsilon, terminate))
 
         # Decreasing the epsilon if the replay starts
         if train == True and DQNAgent.epsilon > DQNAgent.epsilon_min:
@@ -118,3 +124,8 @@ for episode_i in range(0, N_EPISODE):
         traceback.print_exc()
         # print("Finished.")
         break
+
+plt.plot(episode_rewards)
+plt.ylabel(f"Reward")
+plt.xlabel("episode #")
+plt.show()
