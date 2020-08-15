@@ -8,11 +8,6 @@ import datetime
 import numpy as np
 
 import matplotlib.pyplot as plt
-from matplotlib import style
-
-
-from matplotlib import style
-
 
 HOST = "localhost"
 PORT = 1111
@@ -29,7 +24,7 @@ with open(filename, 'w') as f:
 
 # Parameters for training a DQN model
 # N_EPISODE = 10000  # The number of episodes for training
-N_EPISODE = 1000  # The number of episodes for training
+N_EPISODE = 10000  # The number of episodes for training
 # MAX_STEP = 1000   #The number of steps for each episode
 BATCH_SIZE = 32 #128 # or 256  #The number of experiences for each replay
 MEMORY_SIZE = 100000 # tang dan -->>>>  # The size of the batch for storing experiences
@@ -107,6 +102,7 @@ for episode_i in range(0, N_EPISODE):
                 break
 
         episode_rewards.append(episode_reward)
+	score = minerEnv.state.score
 
         # check again ??????????????????????????????????????????????????????????
         # Iteration to save the network architecture and weights
@@ -118,8 +114,8 @@ for episode_i in range(0, N_EPISODE):
                                 "DQNmodel_" + now.strftime("%Y%m%d-%H%M") + "_ep" + str(episode_i + 1))
 
         # Print the training information after the episode
-        print('Episode %d ends. Number of steps is: %d. Accumulated Reward = %.4f. Epsilon = %.2f .Termination code: %d' % (
-            episode_i + 1, step + 1, episode_reward, DQNAgent.epsilon, terminate))
+        print('Episode %d ends. Number of steps is: %d. Accumulated Reward = %.4f. Score = %d. Epsilon = %.2f .Termination code: %d' % (
+            episode_i + 1, step + 1, episode_reward, score, DQNAgent.epsilon, terminate))
 
         # Decreasing the epsilon if the replay starts
         if train == True and DQNAgent.epsilon > DQNAgent.epsilon_min:
