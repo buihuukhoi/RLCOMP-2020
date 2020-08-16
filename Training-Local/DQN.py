@@ -20,7 +20,7 @@ class DQN:
             epsilon=1,  # Epsilon - the exploration factor
             epsilon_min=0.01,  # The minimum epsilon
             epsilon_decay=0.999,  # The decay epsilon for each update_epsilon time
-            learning_rate=0.00025,  # The learning rate for the DQN network
+            learning_rate=0.0001,  # The learning rate for the DQN network
             tau=0.125,  # The factor for updating the DQN target network from the DQN network
             sess=None,
     ):
@@ -61,7 +61,7 @@ class DQN:
         d = Dense(self.action_space, activation="linear")(d)
 
         model = Model(inputs=[x1, x2], outputs=d)
-        model.compile(loss="mse", optimizer=optimizers.Adam(lr=0.0001), metrics=['accuracy'])
+        model.compile(loss="mse", optimizer=optimizers.Adam(lr=self.learning_rate), metrics=['accuracy'])
         #print(model.summary())
         return model
 

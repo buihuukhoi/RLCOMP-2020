@@ -128,34 +128,41 @@ class MinerEnv:
     def get_reward(self):
         # return -0.01 ~ 0.01
         # reward must target to mine goal
-        # define weight for goal and energy
-        weight_goal = 0.5  # < 1
-        weight_consumed_energy = 1 - weight_goal
 
-        max_reward = 50 * weight_goal - 4 * weight_consumed_energy  # if not died
-        reward_died = -50  # ~ double max reward
-        reward_enter_goal = 25
+        max_reward = 50
+        reward_died = -100  # ~ double max reward
+        reward_enter_goal = 12.5
 
         # Calculate reward
         reward = 0
+
+        # energy_action = self.state.energy - self.energy_pre  # < 0 if not relax
         score_action = self.state.score - self.score_pre  # >= 0
-        energy_action = self.state.energy - self.energy_pre  # < 0 if not relax
-        self.score_pre = self.state.score
-        self.energy_pre = self.state.energy
+        reward += score_action
 
-        reward += score_action * weight_goal
-        reward += energy_action * weight_consumed_energy
-        if (reward < 0) and (self.state.mapInfo.gold_amount(self.state.x, self.state.y) > 0):
-            # enter goal
-            reward += reward_enter_goal * weight_goal
+        # enter goal
+        if (int(self.state.lastAction) < 4) and (self.state.mapInfo.gold_amount(self.state.x, self.state.y) > 0):
+            reward += reward_enter_goal
 
-        # If out of the map, then the DQN agent should be punished by a larger nagative reward.
+        # mining at position are not goal, ==> a larger negative reward
+        elif (int(self.state.lastAction) == 5) and (self.state.mapInfo.gold_amount(self.state.x, self.state.y) == 0):
+            reward = reward_died
+
+        # relax when energy > 40
+        elif self.energy_pre > 40 and int(self.state.lastAction) == 4:
+            reward = reward_died
+
+        # If out of the map, then the DQN agent should be punished by a larger negative reward.
         if self.state.status == State.STATUS_ELIMINATED_WENT_OUT_MAP:
             reward = reward_died
 
-        # Run out of energy, then the DQN agent should be punished by a larger nagative reward.
+        # Run out of energy, then the DQN agent should be punished by a larger negative reward.
         if self.state.status == State.STATUS_ELIMINATED_OUT_OF_ENERGY:
             reward = reward_died
+
+        self.score_pre = self.state.score
+        self.energy_pre = self.state.energy
+
         # print ("reward",reward)
         return reward / max_reward / self.state.mapInfo.maxStep  # 100 steps
 
