@@ -58,7 +58,7 @@ class MinerEnv:
         max_y = self.state.mapInfo.max_y
         max_player_energy = 50
         max_score = 67 * 50
-        max_lastAction = 6 + 1  # +1 because of None
+        max_last_action = 6
         max_status = 5
 
         # Building the map
@@ -98,9 +98,9 @@ class MinerEnv:
         view_2[index_player * 6 + 2] = self.state.energy / max_player_energy
         view_2[index_player * 6 + 3] = self.state.score / max_score
         if self.state.lastAction is None:  # 0 step
-            view_2[index_player * 6 + 4] = max_lastAction / max_lastAction
+            view_2[index_player * 6 + 4] = -1 / max_last_action
         else:  # > 1 step
-            view_2[index_player * 6 + 4] = self.state.lastAction / max_lastAction
+            view_2[index_player * 6 + 4] = self.state.lastAction / max_last_action
         view_2[index_player * 6 + 5] = self.state.status / max_status
 
         for player in self.state.players:
@@ -111,12 +111,12 @@ class MinerEnv:
                 if "energy" in player:  # > 1 step
                     view_2[index_player * 6 + 2] = player["energy"] / max_player_energy
                     view_2[index_player * 6 + 3] = player["score"] / max_score
-                    view_2[index_player * 6 + 4] = player["lastAction"] / max_lastAction  # one hot
+                    view_2[index_player * 6 + 4] = player["lastAction"] / max_last_action  # one hot
                     view_2[index_player * 6 + 5] = player["status"] / max_status
                 else:  # 0 step, initial state
                     view_2[index_player * 6 + 2] = 50 / max_player_energy
                     view_2[index_player * 6 + 3] = 0 / max_score
-                    view_2[index_player * 6 + 4] = max_lastAction / max_lastAction  # one hot
+                    view_2[index_player * 6 + 4] = -1 / max_last_action  # one hot
                     view_2[index_player * 6 + 5] = self.state.STATUS_PLAYING / max_status
 
         # Convert the DQNState from list to array for training
@@ -126,14 +126,15 @@ class MinerEnv:
         return DQNState_map, DQNState_users
 
     def get_reward(self):
-    	# return -0.01 ~ 0.01
-    	# reward to go to goal
+        # return -0.01 ~ 0.01
+        # reward must target to mine goal
         # define weight for goal and energy
         weight_goal = 0.5  # < 1
         weight_consumed_energy = 1 - weight_goal
 
-        max_reward = 50 - 4  # if not died
-        reward_died = -100
+        max_reward = 50 * weight_goal - 4 * weight_consumed_energy  # if not died
+        reward_died = -50  # ~ double max reward
+        reward_enter_goal = 25
 
         # Calculate reward
         reward = 0
@@ -144,6 +145,9 @@ class MinerEnv:
 
         reward += score_action * weight_goal
         reward += energy_action * weight_consumed_energy
+        if (reward < 0) and (self.state.mapInfo.gold_amount(self.state.x, self.state.y) > 0):
+            # enter goal
+            reward += reward_enter_goal * weight_goal
 
         # If out of the map, then the DQN agent should be punished by a larger nagative reward.
         if self.state.status == State.STATUS_ELIMINATED_WENT_OUT_MAP:

@@ -17,7 +17,7 @@ if len(sys.argv) == 3:
 
 # Create header for saving DQN learning file
 now = datetime.datetime.now() #Getting the latest datetime
-header = ["Ep", "Step", "Reward", "Episode_Reward", "Action", "Epsilon", "Done", "Termination_Code"] #Defining header for the save file
+header = ["Ep", "Step", "Score", "Reward", "Episode_Reward", "Action", "Epsilon", "Done", "Termination_Code"] #Defining header for the save file
 filename = "Data/data_" + now.strftime("%Y%m%d-%H%M") + ".csv"
 with open(filename, 'w') as f:
     pd.DataFrame(columns=header).to_csv(f, encoding='utf-8', index=False, header=True)
@@ -68,6 +68,7 @@ for episode_i in range(0, N_EPISODE):
         episode_reward = 0  # The amount of rewards for the entire episode
         terminate = False  # The variable indicates that the episode ends
         maxStep = minerEnv.state.mapInfo.maxStep  # Get the maximum number of steps for each episode in training
+        score = 0  # Khoi added
         # Start an episode for training
         for step in range(0, maxStep):
             action = DQNAgent.act(state_map, state_users)  # Getting an action from the DQN model from the state (s)
@@ -90,10 +91,12 @@ for episode_i in range(0, N_EPISODE):
             state_map = new_state_map  # Assign the next state for the next step.
             state_users = new_state_users  # Assign the next state for the next step.
 
+            score = minerEnv.state.score
+
             # check again, when we need to save ?????????????????????????????????????????????????????
             # Saving data to file
             save_data = np.hstack(
-                [episode_i + 1, step + 1, reward, episode_reward, action, DQNAgent.epsilon, terminate]).reshape(1, 7)
+                [episode_i + 1, step + 1, score, reward, episode_reward, action, DQNAgent.epsilon, terminate]).reshape(1, 8)
             with open(filename, 'a') as f:
                 pd.DataFrame(save_data).to_csv(f, encoding='utf-8', index=False, header=False)
 
@@ -102,7 +105,6 @@ for episode_i in range(0, N_EPISODE):
                 break
 
         episode_rewards.append(episode_reward)
-        score = minerEnv.state.score
 
         # check again ??????????????????????????????????????????????????????????
         # Iteration to save the network architecture and weights
@@ -127,8 +129,9 @@ for episode_i in range(0, N_EPISODE):
         traceback.print_exc()
         # print("Finished.")
         break
-
+"""
 plt.plot(episode_rewards)
 plt.ylabel(f"Reward")
 plt.xlabel("episode #")
 plt.show()
+"""
