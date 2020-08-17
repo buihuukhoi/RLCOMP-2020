@@ -46,6 +46,12 @@ class MinerEnv:
 
     # Functions are customized by client
     def get_state(self):
+        # update position, score, energy
+        self.x_pre = self.state.x
+        self.y_pre = self.state.y
+        self.score_pre = self.state.score
+        self.energy_pre = self.state.energy
+
         depth = 3  # goal, min_energy, max_energy
         goal_depth = 0
         min_energy_depth = 1
@@ -170,11 +176,6 @@ class MinerEnv:
         # Run out of energy, then the DQN agent should be punished by a larger negative reward.
         if self.state.status == State.STATUS_ELIMINATED_OUT_OF_ENERGY:
             reward = reward_died
-
-        self.x_pre = self.state.x
-        self.y_pre = self.state.y
-        self.score_pre = self.state.score
-        self.energy_pre = self.state.energy
 
         # print ("reward",reward)
         return reward / max_reward / self.state.mapInfo.maxStep  # 100 steps
