@@ -55,17 +55,19 @@ class MinerEnv:
         depth = 3  # goal, min_energy, max_energy
         goal_depth = 0
         min_energy_depth = 1
-        max_energy_depth = 1
+        max_energy_depth = 2
 
         len_player_infor = 6 * 4
 
-        max_goal = 67 * 50 * 4  # assume 67 steps for mining and 33 steps for relaxing
+        #max_goal = 67 * 50 * 4  # assume 67 steps for mining and 33 steps for relaxing
+        max_goal = 2000
         max_energy = 100
 
         max_x = self.state.mapInfo.max_x
         max_y = self.state.mapInfo.max_y
         max_player_energy = 50
-        max_score = 67 * 50
+        max_score = 3000
+        #max_score = 67 * 50
         max_last_action = 6
         max_status = 5
 
@@ -86,8 +88,8 @@ class MinerEnv:
                 view_1[i, j, min_energy_depth] = 10 / max_energy
                 view_1[i, j, max_energy_depth] = 10 / max_energy
             elif obstacle["type"] == SwampID:  # Swamp
-                view_1[i, j, min_energy_depth] = obstacle["value"] / max_energy  # 5, 20, 50, 100
-                view_1[i, j, max_energy_depth] = obstacle["value"] / max_energy  # 5, 20, 50, 100
+                view_1[i, j, min_energy_depth] = -obstacle["value"] / max_energy  # 5, 20, 40, 100
+                view_1[i, j, max_energy_depth] = -obstacle["value"] / max_energy  # 5, 20, 40, 100
 
         for goal in self.state.mapInfo.golds:
             i = goal["posx"]
@@ -138,8 +140,8 @@ class MinerEnv:
         # reward must target to mine goal
 
         max_reward = 50
-        reward_died = -100  # ~ double max reward
-        reward_enter_goal = 12.5
+        reward_died = -50  # ~ double max reward
+        #reward_enter_goal = 12.5
 
         # Calculate reward
         reward = 0
@@ -155,12 +157,12 @@ class MinerEnv:
         """
         
         # at goal but move to ground
-        if (int(self.state.lastAction) < 4) and (self.state.mapInfo.gold_amount(self.x_pre, self.y_pre) > 0) \
-                and (self.state.mapInfo.gold_amount(self.state.x, self.state.y) == 0):
-            reward = reward_died
+        #if (int(self.state.lastAction) < 4) and (self.state.mapInfo.gold_amount(self.x_pre, self.y_pre) > 0) \
+        #        and (self.state.mapInfo.gold_amount(self.state.x, self.state.y) == 0):
+        #    reward = reward_died
 
-        # mining at position are not goal, ==> a larger negative reward
-        elif (int(self.state.lastAction) == 5) and (self.state.mapInfo.gold_amount(self.state.x, self.state.y) == 0):
+        # mining but cannot get goal, ==> a larger negative reward
+        if (int(self.state.lastAction) == 5) and (score_action == 0):
             reward = reward_died
 
         # relax when energy > 40
