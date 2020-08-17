@@ -24,11 +24,11 @@ with open(filename, 'w') as f:
 
 # Parameters for training a DQN model
 # N_EPISODE = 10000  # The number of episodes for training
-N_EPISODE = 10000  # The number of episodes for training
+N_EPISODE = 100000  # The number of episodes for training
 # MAX_STEP = 1000   #The number of steps for each episode
-BATCH_SIZE = 32 #128 # or 256  #The number of experiences for each replay
-MEMORY_SIZE = 100000 # tang dan -->>>>  # The size of the batch for storing experiences
-SAVE_NETWORK = 100 #After this number of episodes, the DQN model is saved for testing later.
+BATCH_SIZE = 128 #128 # or 256  #The number of experiences for each replay
+MEMORY_SIZE = 1000000 # tang dan -->>>>  # The size of the batch for storing experiences
+SAVE_NETWORK = 500 #After this number of episodes, the DQN model is saved for testing later.
 INITIAL_REPLAY_SIZE = 1000 #The number of experiences are stored in the memory batch before starting replaying
 INPUT_SHAPE_1 = (21, 9, 3)  # The number of input values for the DQN model
 INPUT_SHAPE_2 = (24,)
@@ -104,7 +104,7 @@ for episode_i in range(0, N_EPISODE):
                 # If the episode ends, then go to the next episode
                 break
 
-        episode_rewards.append(episode_reward)
+        #episode_rewards.append(episode_reward)
 
         # check again ??????????????????????????????????????????????????????????
         # Iteration to save the network architecture and weights
