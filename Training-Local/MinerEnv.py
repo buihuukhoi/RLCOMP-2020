@@ -15,6 +15,8 @@ class MinerEnv:
 
         self.score_pre = self.state.score  # Storing the last score for designing the reward function
         self.energy_pre = self.state.energy
+        self.x_pre = self.state.x
+        self.y_pre = self.state.y
 
     def start(self):  # connect to server
         self.socket.connect()
@@ -122,7 +124,7 @@ class MinerEnv:
         # Convert the DQNState from list to array for training
         DQNState_map = np.array(view_1)
         DQNState_users = np.array(view_2)
-        
+
         return DQNState_map, DQNState_users
 
     def get_reward(self):
@@ -130,13 +132,13 @@ class MinerEnv:
         # reward must target to mine goal
 
         max_reward = 50
-        reward_died = -100  # ~ double max reward
+        reward_died = -50  # ~ double max reward
         reward_enter_goal = 12.5
 
         # Calculate reward
         reward = 0
 
-        # energy_action = self.state.energy - self.energy_pre  # < 0 if not relax
+        energy_action = self.state.energy - self.energy_pre  # < 0 if not relax
         score_action = self.state.score - self.score_pre  # >= 0
         reward += score_action
 
@@ -144,12 +146,21 @@ class MinerEnv:
         if (int(self.state.lastAction) < 4) and (self.state.mapInfo.gold_amount(self.state.x, self.state.y) > 0):
             reward += reward_enter_goal
 
+        # at goal but not mine
+        elif (int(self.state.lastAction) < 4) and (self.state.mapInfo.gold_amount(self.x_pre, self.y_pre) > 0) \
+                and (self.state.mapInfo.gold_amount(self.state.x, self.state.y) == 0):
+            reward = reward_died
+
         # mining at position are not goal, ==> a larger negative reward
         elif (int(self.state.lastAction) == 5) and (self.state.mapInfo.gold_amount(self.state.x, self.state.y) == 0):
             reward = reward_died
 
         # relax when energy > 40
         elif self.energy_pre > 40 and int(self.state.lastAction) == 4:
+            reward = reward_died
+
+        # relax but cannot get more energy
+        elif int(self.state.lastAction) == 4 and energy_action == 0:
             reward = reward_died
 
         # If out of the map, then the DQN agent should be punished by a larger negative reward.
@@ -160,6 +171,8 @@ class MinerEnv:
         if self.state.status == State.STATUS_ELIMINATED_OUT_OF_ENERGY:
             reward = reward_died
 
+        self.x_pre = self.state.x
+        self.y_pre = self.state.y
         self.score_pre = self.state.score
         self.energy_pre = self.state.energy
 
