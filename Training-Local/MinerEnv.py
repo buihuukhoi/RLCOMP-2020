@@ -147,13 +147,15 @@ class MinerEnv:
         energy_action = self.state.energy - self.energy_pre  # < 0 if not relax
         score_action = self.state.score - self.score_pre  # >= 0
         reward += score_action
-
+        """
+        # how about several goal at nearby and energy <= 5
         # enter goal
         if (int(self.state.lastAction) < 4) and (self.state.mapInfo.gold_amount(self.state.x, self.state.y) > 0):
             reward += reward_enter_goal
-
-        # at goal but not mine
-        elif (int(self.state.lastAction) < 4) and (self.state.mapInfo.gold_amount(self.x_pre, self.y_pre) > 0) \
+        """
+        
+        # at goal but move to ground
+        if (int(self.state.lastAction) < 4) and (self.state.mapInfo.gold_amount(self.x_pre, self.y_pre) > 0) \
                 and (self.state.mapInfo.gold_amount(self.state.x, self.state.y) == 0):
             reward = reward_died
 
