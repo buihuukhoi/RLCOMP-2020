@@ -130,11 +130,12 @@ class DQN:
 
     def update_target_model(self):
         weights = self.model.get_weights()
-        target_weights = self.target_model.get_weights()
-        for i in range(0, len(target_weights)):
-            target_weights[i] = weights[i] * self.tau + target_weights[i] * (1 - self.tau)
+        #target_weights = self.target_model.get_weights()
+        #for i in range(0, len(target_weights)):
+        #    target_weights[i] = weights[i] * self.tau + target_weights[i] * (1 - self.tau)
 
-        self.target_model.set_weights(target_weights)
+        #self.target_model.set_weights(target_weights)
+        self.target_model.set_weights(weights)
 
     def update_epsilon(self):
         self.epsilon *= self.epsilon_decay
