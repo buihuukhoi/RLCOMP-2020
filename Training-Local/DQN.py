@@ -16,8 +16,8 @@ class DQN:
             input_shape_1=(21, 9, 2),  # The number of inputs for the DQN network
             input_shape_2=(24,),
             action_space=6,  # The number of actions for the DQN network
-            #gamma=0.99,  # The discount factor
-            gamma=0.9
+            gamma=0.99,  # The discount factor
+            #gamma=0.9
             epsilon=1,  # Epsilon - the exploration factor
             epsilon_min=0.01,  # The minimum epsilon
             epsilon_decay=0.99999,  # The decay epsilon for each update_epsilon time
