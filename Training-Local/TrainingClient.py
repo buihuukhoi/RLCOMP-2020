@@ -38,6 +38,7 @@ MAP_MAX_Y = 9  #Height of the Map
 
 # Initialize a DQN model and a memory batch for storing experiences
 DQNAgent = DQN(INPUT_SHAPE_1, INPUT_SHAPE_2, ACTIONNUM)
+DQNAgent.update_target_model()
 memory = Memory(MEMORY_SIZE)
 
 # Initialize environment
