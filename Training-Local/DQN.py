@@ -39,7 +39,6 @@ class DQN:
         self.model = self.create_model()
         # create target model
         self.target_model = self.create_model()
-        self.target_model.set_weights(self.model.get_weights())
 
         # Tensorflow GPU optimization
         config = tf.compat.v1.ConfigProto()
