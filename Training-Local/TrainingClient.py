@@ -2,6 +2,7 @@ import sys
 from DQN import DQN # A class of creating a deep q-learning model
 from MinerEnv import MinerEnv # A class of creating a communication environment between the DQN model and the GameMiner environment (GAME_SOCKET_DUMMY.py)
 from Memory import Memory # A class of creating a batch in order to store experiences for the training process
+import tensorflow as tf
 
 import pandas as pd
 import datetime
@@ -35,6 +36,10 @@ INPUT_SHAPE_2 = (24,)
 ACTIONNUM = 6  # The number of actions output from the DQN model
 MAP_MAX_X = 21 #Width of the Map
 MAP_MAX_Y = 9  #Height of the Map
+
+current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+log_dir = 'Logs/' + current_time
+summary_writer = tf.summary.create_file_writer(log_dir)
 
 # Initialize a DQN model and a memory batch for storing experiences
 DQNAgent = DQN(INPUT_SHAPE_1, INPUT_SHAPE_2, ACTIONNUM)
@@ -105,7 +110,12 @@ for episode_i in range(0, N_EPISODE):
                 # If the episode ends, then go to the next episode
                 break
 
-        #episode_rewards.append(episode_reward)
+        # episode_rewards.append(episode_reward)
+        with summary_writer.as_default():
+            tf.summary.scalar('episode reward', episode_reward, step=episode_i + 1)
+            tf.summary.scalar('episode avg reward', episode_reward / (step + 1), step=episode_i + 1)
+            tf.summary.scalar('episode goal', score, step=episode_i + 1)
+            tf.summary.scalar('episode total steps', step + 1, step=episode_i + 1)
 
         # check again ??????????????????????????????????????????????????????????
         # Iteration to save the network architecture and weights

@@ -141,6 +141,7 @@ class MinerEnv:
 
         max_reward = 50
         reward_died = -50  # ~ double max reward
+        #reward_died = -25  # let a try
         #reward_enter_goal = 12.5
 
         # Calculate reward
