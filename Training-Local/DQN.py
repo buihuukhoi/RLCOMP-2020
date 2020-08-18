@@ -39,6 +39,7 @@ class DQN:
         self.model = self.create_model()
         # create target model
         self.target_model = self.create_model()
+        self.target_model.set_weights(self.model.get_weights())
 
         # Tensorflow GPU optimization
         config = tf.compat.v1.ConfigProto()
@@ -119,7 +120,7 @@ class DQN:
             # inputs[i] = state
             # check input shape again ?????????????????????????????????????????????????????????
             # targets[i, :] = self.target_model.predict({"state_map": state_map.reshape(1, 21, 9, 3), "state_users": state_users.reshape(1, 24)})
-            targets[i, :] = self.get_qs(state)
+            targets[i, :] = self.get_qs(state_map, state_users)
             if done:
                 targets[i, action] = reward  # if terminated ==> no new_state ==> only equals reward
             else:
