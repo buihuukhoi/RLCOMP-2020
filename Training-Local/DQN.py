@@ -21,7 +21,7 @@ class DQN:
             epsilon=1,  # Epsilon - the exploration factor
             epsilon_min=0.01,  # The minimum epsilon
             epsilon_decay=0.9999,  # The decay epsilon for each update_epsilon time
-            learning_rate=0.00025,  # The learning rate for the DQN network
+            learning_rate=0.0001,  # The learning rate for the DQN network
             tau=0.125,  # The factor for updating the DQN target network from the DQN network
             sess=None,
     ):
@@ -49,6 +49,26 @@ class DQN:
 
     def create_model(self):
         x1 = Input(shape=self.input_shape_1, name="state_map")
+        conv = Conv2D(32, (8, 8), strides=(4, 4), padding="same", activation="relu")(x1)
+        conv = Conv2D(64, (4, 4), strides=(2, 2), padding="same", activation="relu")(conv)
+        conv = Conv2D(64, (3, 3), strides=(1, 1), padding="same", activation="relu")(conv)
+        flatten_1 = Flatten()(conv)
+
+        x2 = Input(shape=self.input_shape_2, name="state_users")
+        # flatten_2 = Flatten()(x2)
+
+        # concat = Concatenate()([flatten_1, flatten_2])
+        concat = concatenate([flatten_1, x2])
+        d = Dense(512, activation='relu')(concat)
+        d = Dense(self.action_space, activation="linear")(d)
+
+        model = Model(inputs=[x1, x2], outputs=d)
+        model.compile(loss="mse", optimizer=optimizers.Adam(lr=self.learning_rate), metrics=['accuracy'])
+        # print(model.summary())
+        return model
+
+        """
+        x1 = Input(shape=self.input_shape_1, name="state_map")
         conv = Conv2D(256, (3, 3), activation="relu")(x1)
         conv = Conv2D(256, (3, 3), activation="relu")(conv)
         flatten_1 = Flatten()(conv)
@@ -65,7 +85,7 @@ class DQN:
         model.compile(loss="mse", optimizer=optimizers.Adam(lr=self.learning_rate), metrics=['accuracy'])
         #print(model.summary())
         return model
-
+        """
         """
         model = Sequential()
 
