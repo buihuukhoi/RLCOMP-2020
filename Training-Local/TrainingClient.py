@@ -37,9 +37,17 @@ ACTIONNUM = 6  # The number of actions output from the DQN model
 MAP_MAX_X = 21 #Width of the Map
 MAP_MAX_Y = 9  #Height of the Map
 
+my_tensor = tf.Variable(0, dtype=tf.float32)  # initial value = 0
+
+tf.summary.scalar('episode reward', my_tensor)
+tf.summary.scalar('episode avg_reward', my_tensor)
+tf.summary.scalar('episode goal', my_tensor)
+tf.summary.scalar('episode total_steps', my_tensor)
+merged_summary_op = tf.summary.merge_all()
+
 current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 log_dir = 'Logs/' + current_time
-summary_writer = tf.summary.create_file_writer(log_dir)
+summary_writer = tf.summary.FileWriter(log_dir)
 
 # Initialize a DQN model and a memory batch for storing experiences
 DQNAgent = DQN(INPUT_SHAPE_1, INPUT_SHAPE_2, ACTIONNUM)
@@ -111,11 +119,13 @@ for episode_i in range(0, N_EPISODE):
                 break
 
         # episode_rewards.append(episode_reward)
-        with summary_writer.as_default():
-            tf.summary.scalar('episode reward', episode_reward, step=episode_i + 1)
-            tf.summary.scalar('episode avg reward', episode_reward / (step + 1), step=episode_i + 1)
-            tf.summary.scalar('episode goal', score, step=episode_i + 1)
-            tf.summary.scalar('episode total steps', step + 1, step=episode_i + 1)
+        summary = tf.Summary()
+        summary.value.add(tag='episode reward', simple_value=episode_reward)
+        summary.value.add(tag='episode agv_reward', simple_value=episode_reward / (step + 1))
+        summary.value.add(tag='episode goal', simple_value=score)
+        summary.value.add(tag='episode total steps', simple_value=step + 1)
+        summary_writer.add_summary(summary, episode_i)
+        summary_writer.flush()
 
         # check again ??????????????????????????????????????????????????????????
         # Iteration to save the network architecture and weights
