@@ -158,7 +158,6 @@ class DQN:
         inputs_users = np.array(inputs_map)
         targets = np.array(inputs_map)
         loss = self.model.train_on_batch({"state_map": inputs_map, "state_users": inputs_users}, targets)
-        return loss
 
     def update_target_model(self):
         weights = self.model.get_weights()
