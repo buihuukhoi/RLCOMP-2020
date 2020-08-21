@@ -155,8 +155,8 @@ class DQN:
             targets.append(current_qs)
             # Training
         inputs_map = np.array(inputs_map)
-        inputs_users = np.array(inputs_map)
-        targets = np.array(inputs_map)
+        inputs_users = np.array(inputs_users)
+        targets = np.array(targets)
         loss = self.model.train_on_batch({"state_map": inputs_map, "state_users": inputs_users}, targets)
 
     def update_target_model(self):
