@@ -22,7 +22,7 @@ class DQN:
             epsilon_min=0.01,  # The minimum epsilon
             epsilon_decay=0.9999,  # The decay epsilon for each update_epsilon time
             #epsilon_decay=0.999975,  # The decay epsilon for each update_epsilon time
-            learning_rate=0.0001,  # The learning rate for the DQN network
+            learning_rate=0.00025,  # The learning rate for the DQN network
             tau=0.125,  # The factor for updating the DQN target network from the DQN network
             sess=None,
     ):
@@ -124,31 +124,38 @@ class DQN:
 
     def replay(self, samples, batch_size):
         # samples are taken randomly in Memory.sample()
-        inputs_map = np.zeros((batch_size, *(self.input_shape_1)))
-        inputs_users = np.zeros((batch_size, *(self.input_shape_2)))
-        targets = np.zeros((batch_size, self.action_space))
+        inputs_map = []
+        inputs_users = []
+        targets = []
+
+        states_map = samples[0]
+        states_users = samples[1]
+        actions = samples[2]
+        rewards = samples[3]
+        new_states_map = samples[4]
+        new_states_users = samples[5]
+        dones = samples[6]
+
+        current_qs_list = self.model.predict({"state_map": states_map, "state_users": states_users})
+        new_qs_list = self.target_model.predict({"state_map": new_states_map, "state_users": new_states_users})
 
         for i in range(0, batch_size):
-            state_map = samples[0][i]
-            state_users = samples[1][i]
-            action = samples[2][i]
-            reward = samples[3][i]
-            new_state_map = samples[4][i]
-            new_state_users = samples[5][i]
-            done = samples[6][i]
-
-            # inputs[i] = state
-            # check input shape again ?????????????????????????????????????????????????????????
-            # targets[i, :] = self.target_model.predict({"state_map": state_map.reshape(1, 21, 9, 3), "state_users": state_users.reshape(1, 24)})
-            targets[i, :] = self.get_qs(state_map, state_users)
-            if done:
-                targets[i, action] = reward  # if terminated ==> no new_state ==> only equals reward
+            if dones[i]:
+                new_q = rewards[i]  # if terminated ==> no new_state ==> only equals reward
             else:
                 # check input shape again ?????????????????????????????????????????????????????????
-                max_future_qs = np.max(self.target_model.predict({"state_map": new_state_map.reshape(1, 21, 9, 3), "state_users": new_state_users.reshape(1, 24)}))
-                targets[i, action] = reward + self.gamma * max_future_qs
-        # Training
+                max_new_qs = np.max(new_qs_list[i])
+                new_q = rewards[i] + self.gamma * max_new_qs
+
+            current_qs = current_qs_list[i]
+            current_qs[actions[i]] = new_q
+
+            inputs_map.append(states_map[i])
+            inputs_users.append(states_users[i])
+            targets.append(current_qs)
+            # Training
         loss = self.model.train_on_batch({"state_map": inputs_map, "state_users": inputs_users}, targets)
+        return loss
 
     def update_target_model(self):
         weights = self.model.get_weights()
