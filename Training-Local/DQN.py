@@ -128,13 +128,13 @@ class DQN:
         inputs_users = []
         targets = []
 
-        states_map = samples[0]
-        states_users = samples[1]
-        actions = samples[2]
-        rewards = samples[3]
-        new_states_map = samples[4]
-        new_states_users = samples[5]
-        dones = samples[6]
+        states_map = np.array([transition[0] for transition in samples])
+        states_users = np.array([transition[1] for transition in samples])
+        actions = np.array([transition[2] for transition in samples])
+        rewards = np.array([transition[3] for transition in samples])
+        new_states_map = np.array([transition[4] for transition in samples])
+        new_states_users = np.array([transition[5] for transition in samples])
+        dones = np.array([transition[6] for transition in samples])
 
         current_qs_list = self.model.predict({"state_map": states_map, "state_users": states_users})
         new_qs_list = self.target_model.predict({"state_map": new_states_map, "state_users": new_states_users})

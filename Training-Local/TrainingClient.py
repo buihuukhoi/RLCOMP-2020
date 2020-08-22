@@ -39,7 +39,7 @@ MAP_MAX_Y = 9  #Height of the Map
 
 my_tensor = tf.Variable(0, dtype=tf.float32)  # initial value = 0
 
-tf.summary.scalar('episode avg_loss', my_tensor)
+#tf.summary.scalar('episode avg_loss', my_tensor)
 tf.summary.scalar('episode reward', my_tensor)
 tf.summary.scalar('episode avg_reward', my_tensor)
 tf.summary.scalar('episode goal', my_tensor)
@@ -83,7 +83,7 @@ for episode_i in range(0, N_EPISODE):
         terminate = False  # The variable indicates that the episode ends
         maxStep = minerEnv.state.mapInfo.maxStep  # Get the maximum number of steps for each episode in training
         score = 0  # Khoi added
-        episode_loss = 0
+        # episode_loss = 0
         step = 0
         # Start an episode for training
         for step in range(0, maxStep):
@@ -94,15 +94,14 @@ for episode_i in range(0, N_EPISODE):
             terminate = minerEnv.check_terminate()  # Checking the end status of the episode
 
             # Add this transition to the memory batch
-            memory.push(state_map, state_users, action, reward, new_state_map, new_state_users, terminate)
+            memory.append(state_map, state_users, action, reward, new_state_map, new_state_users, terminate)
 
             # Sample batch memory to train network
-            if memory.length > INITIAL_REPLAY_SIZE:
+            if memory.size > INITIAL_REPLAY_SIZE:
                 # If there are INITIAL_REPLAY_SIZE experiences in the memory batch
                 # then start replaying
                 batch = memory.sample(BATCH_SIZE)  # Get a BATCH_SIZE experiences for replaying
-                loss = DQNAgent.replay(batch, BATCH_SIZE)  # Do relaying
-                episode_loss += loss
+                DQNAgent.replay(batch, BATCH_SIZE)  # Do relaying
                 train = True  # Indicate the training starts
             episode_reward += reward  # Plus the reward to the total reward of the episode
             state_map = new_state_map  # Assign the next state for the next step.
@@ -122,7 +121,7 @@ for episode_i in range(0, N_EPISODE):
                 break
 
         summary = tf.Summary()
-        summary.value.add(tag='episode avg_loss', simple_value=episode_loss/(step+1))
+        #summary.value.add(tag='episode avg_loss', simple_value=episode_loss/(step+1))
         summary.value.add(tag='episode reward', simple_value=episode_reward)
         summary.value.add(tag='episode agv_reward', simple_value=episode_reward/(step + 1))
         summary.value.add(tag='episode goal', simple_value=score)
