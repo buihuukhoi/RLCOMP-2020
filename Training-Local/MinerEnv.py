@@ -139,7 +139,7 @@ class MinerEnv:
         #reward_enter_goal = 12.5
 
         # Calculate reward
-        reward = 0
+        reward = -1  # moving, because agent will die at the max step
 
         energy_action = self.state.energy - self.energy_pre  # < 0 if not relax
         score_action = self.state.score - self.score_pre  # >= 0
