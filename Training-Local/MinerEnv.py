@@ -136,7 +136,7 @@ class MinerEnv:
         max_reward = 50
         reward_died = -50  # ~ double max reward
         #reward_died = -25  # let a try
-        #reward_enter_goal = 12.5
+        reward_enter_goal = 25
 
         # Calculate reward
         reward = -1  # moving, because agent will die at the max step
@@ -144,12 +144,11 @@ class MinerEnv:
         energy_action = self.state.energy - self.energy_pre  # < 0 if not relax
         score_action = self.state.score - self.score_pre  # >= 0
         reward += score_action
-        """
+
         # how about several goal at nearby and energy <= 5
         # enter goal
         if (int(self.state.lastAction) < 4) and (self.state.mapInfo.gold_amount(self.state.x, self.state.y) > 0):
             reward += reward_enter_goal
-        """
         
         # at goal but move to ground
         #if (int(self.state.lastAction) < 4) and (self.state.mapInfo.gold_amount(self.x_pre, self.y_pre) > 0) \
@@ -157,7 +156,7 @@ class MinerEnv:
         #    reward = reward_died
 
         # mining but cannot get goal, ==> a larger negative reward
-        if (int(self.state.lastAction) == 5) and (score_action == 0):
+        elif (int(self.state.lastAction) == 5) and (score_action == 0):
             reward = reward_died
 
         # relax when energy > 40
@@ -183,7 +182,8 @@ class MinerEnv:
         self.energy_pre = self.state.energy
 
         # print ("reward",reward)
-        return reward / max_reward / self.state.mapInfo.maxStep  # 100 steps
+        #return reward / max_reward / self.state.mapInfo.maxStep  # 100 steps
+        return reward / max_reward
 
     def check_terminate(self):
         # Checking the status of the game

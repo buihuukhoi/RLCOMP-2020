@@ -87,7 +87,11 @@ for episode_i in range(0, N_EPISODE):
         step = 0
         # Start an episode for training
         for step in range(0, maxStep):
-            action = DQNAgent.act(state_map, state_users)  # Getting an action from the DQN model from the state (s)
+            if DQNAgent.epsilon > 0.5 and minerEnv.state.mapInfo.gold_amount(minerEnv.state.x, minerEnv.state.y) > 0 \
+                                    and minerEnv.state.energy > 10:
+                action = 5
+            else:
+                action = DQNAgent.act(state_map, state_users)  # Getting an action from the DQN model from the state (s)
             minerEnv.step(str(action))  # Performing the action in order to obtain the new state
             reward = minerEnv.get_reward()  # Getting a reward
             new_state_map, new_state_users = minerEnv.get_state()  # Getting a new state
