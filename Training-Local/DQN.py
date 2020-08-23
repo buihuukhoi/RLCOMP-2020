@@ -112,7 +112,7 @@ class DQN:
 
     def get_qs(self, state_map, state_users):
         # check shape again ??????????????????????????
-        return self.model.predict({"state_map": state_map.reshape(1, 21, 9, 3), "state_users": state_users.reshape(1, 24)})
+        return self.model.predict({"state_map": state_map.reshape(1, 21, 9, 7), "state_users": state_users.reshape(1, 60)})
 
     def act(self, state_map, state_users):
         # Get the index of the maximum Q values

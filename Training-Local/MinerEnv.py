@@ -46,12 +46,18 @@ class MinerEnv:
 
     # Functions are customized by client
     def get_state(self):
-        depth = 3  # goal, min_energy, max_energy
+        #depth = 3  # goal, min_energy, max_energy
+        depth = 3 + 4  # goal, min_energy, max_energy, 4 player position
         goal_depth = 0
         min_energy_depth = 1
         max_energy_depth = 2
+        my_agent_depth = 3
+        bot1_depth = 4
+        bot2_depth = 5
+        bot3_depth = 6
 
-        len_player_infor = 6 * 4
+        #len_player_infor = 6 * 4
+        len_player_infor = (2+7+6) * 4
 
         # max_goal = 67 * 50 * 4  # assume 67 steps for mining and 33 steps for relaxing
         max_goal = 2000
@@ -62,7 +68,7 @@ class MinerEnv:
         max_player_energy = 50
         max_score = 3000
         #max_score = 67 * 50
-        max_last_action = 6
+        max_last_action = 6 + 1  # 1 because of None
         max_status = 5
 
         # Building the map
@@ -97,31 +103,33 @@ class MinerEnv:
 
         index_player = 0
 
-        view_2[index_player * 6 + 0] = self.state.x / max_x
-        view_2[index_player * 6 + 1] = self.state.y / max_y
-        view_2[index_player * 6 + 2] = self.state.energy / max_player_energy
-        view_2[index_player * 6 + 3] = self.state.score / max_score
-        if self.state.lastAction is None:  # 0 step
-            view_2[index_player * 6 + 4] = -1 / max_last_action
-        else:  # > 1 step
-            view_2[index_player * 6 + 4] = self.state.lastAction / max_last_action
-        view_2[index_player * 6 + 5] = self.state.status / max_status
+        if (0 <= self.state.x <= self.state.mapInfo.max_x) and \
+		(0 <= self.state.y <= self.state.mapInfo.max_y):
+	        view_1[self.state.x, self.state.y, my_agent_depth] = 1
+	        view_2[index_player * 15 + 0] = self.state.energy / max_player_energy
+	        view_2[index_player * 15 + 1] = self.state.score / max_score
+	        if self.state.lastAction is None:  # 0 step
+	            view_2[index_player * 15 + 2 + max_last_action] = 1
+	        else:  # > 1 step
+	            view_2[index_player * 15 + 2 + self.state.lastAction] = 1
+	        view_2[index_player * 6 + 15 + 2 + max_last_action + self.state.status] = 1
 
         for player in self.state.players:
             if player["playerId"] != self.state.id:
                 index_player += 1
-                view_2[index_player * 6 + 0] = player["posx"] / max_x
-                view_2[index_player * 6 + 1] = player["posy"] / max_y
-                if "energy" in player:  # > 1 step
-                    view_2[index_player * 6 + 2] = player["energy"] / max_player_energy
-                    view_2[index_player * 6 + 3] = player["score"] / max_score
-                    view_2[index_player * 6 + 4] = player["lastAction"] / max_last_action  # one hot
-                    view_2[index_player * 6 + 5] = player["status"] / max_status
-                else:  # 0 step, initial state
-                    view_2[index_player * 6 + 2] = 50 / max_player_energy
-                    view_2[index_player * 6 + 3] = 0 / max_score
-                    view_2[index_player * 6 + 4] = -1 / max_last_action  # one hot
-                    view_2[index_player * 6 + 5] = self.state.STATUS_PLAYING / max_status
+                if (0 <= player["posx"] <= self.state.mapInfo.max_x) and \
+				(0 <= player["posy"] <= self.state.mapInfo.max_y):
+	                view_1[player["posx"], player["posy"], bot1_depth] = 1
+	                if "energy" in player:  # > 1 step
+	                    view_2[index_player * 15 + 0] = player["energy"] / max_player_energy
+	                    view_2[index_player * 15 + 1] = player["score"] / max_score
+	                    view_2[index_player * 15 + 2 + player["lastAction"]] = 1  # one hot
+	                    view_2[index_player * 15 + max_last_action + player["status"]] = 1
+	                else:  # 0 step, initial state
+	                    view_2[index_player * 15 + 0] = 50 / max_player_energy
+	                    view_2[index_player * 15 + 1] = 0 / max_score
+	                    view_2[index_player * 15 + 2 + max_last_action] = 1  # one hot
+	                    view_2[index_player * 15 + max_last_action + self.state.STATUS_PLAYING] = 1
 
         # Convert the DQNState from list to array for training
         DQNState_map = np.array(view_1)

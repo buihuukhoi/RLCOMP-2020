@@ -8,7 +8,9 @@ import pandas as pd
 import datetime
 import numpy as np
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
+
+from random import random
 
 HOST = "localhost"
 PORT = 1111
@@ -30,7 +32,7 @@ N_EPISODE = 1000000  # The number of episodes for training
 BATCH_SIZE = 256  #128 # or 256  #The number of experiences for each replay
 MEMORY_SIZE = 1000000  # tang dan -->>>>  # The size of the batch for storing experiences
 SAVE_NETWORK = 500  # After this number of episodes, the DQN model is saved for testing later.
-INITIAL_REPLAY_SIZE = 21*9*6*6  # The number of experiences are stored in the memory batch before starting replaying
+INITIAL_REPLAY_SIZE = 21*9*6*3  # The number of experiences are stored in the memory batch before starting replaying
 INPUT_SHAPE_1 = (21, 9, 7)  # The number of input values for the DQN model
 INPUT_SHAPE_2 = (60,)
 ACTION_NUM = 6  # The number of actions output from the DQN model
@@ -87,8 +89,7 @@ for episode_i in range(0, N_EPISODE):
         step = 0
         # Start an episode for training
         for step in range(0, maxStep):
-            if DQNAgent.epsilon > 0.5 and minerEnv.state.mapInfo.gold_amount(minerEnv.state.x, minerEnv.state.y) > 0 \
-                                    and minerEnv.state.energy > 10:
+            if random() < DQNAgent.epsilon and minerEnv.state.mapInfo.gold_amount(minerEnv.state.x, minerEnv.state.y) > 0:
                 action = 5
             else:
                 action = DQNAgent.act(state_map, state_users)  # Getting an action from the DQN model from the state (s)
