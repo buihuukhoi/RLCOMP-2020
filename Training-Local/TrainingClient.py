@@ -87,7 +87,7 @@ for episode_i in range(0, N_EPISODE):
         step = 0
         # Start an episode for training
         for step in range(0, maxStep):
-            if DQNAgent.epsilon > 0.5 and minerEnv.state.mapInfo.gold_amount(minerEnv.state.x, minerEnv.state.y) > 0 \
+            if DQNAgent.epsilon > 0.9 and minerEnv.state.mapInfo.gold_amount(minerEnv.state.x, minerEnv.state.y) > 0 \
                                     and minerEnv.state.energy > 10:
                 action = 5
             else:
