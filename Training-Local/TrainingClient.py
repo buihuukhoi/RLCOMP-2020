@@ -7,8 +7,9 @@ import tensorflow as tf
 import pandas as pd
 import datetime
 import numpy as np
+import time
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 HOST = "localhost"
 PORT = 1111
@@ -27,10 +28,10 @@ with open(filename, 'w') as f:
 # N_EPISODE = 10000  # The number of episodes for training
 N_EPISODE = 1000000  # The number of episodes for training
 # MAX_STEP = 1000   #The number of steps for each episode
-BATCH_SIZE = 256  #128 # or 256  #The number of experiences for each replay
+BATCH_SIZE = 64  #128 # or 256  #The number of experiences for each replay
 MEMORY_SIZE = 1000000  # tang dan -->>>>  # The size of the batch for storing experiences
 SAVE_NETWORK = 500  # After this number of episodes, the DQN model is saved for testing later.
-INITIAL_REPLAY_SIZE = 21*9*6*6  # The number of experiences are stored in the memory batch before starting replaying
+INITIAL_REPLAY_SIZE = 21*9*6*3  # The number of experiences are stored in the memory batch before starting replaying
 INPUT_SHAPE_1 = (21, 9, 7)  # The number of input values for the DQN model
 INPUT_SHAPE_2 = (60,)
 ACTION_NUM = 6  # The number of actions output from the DQN model
@@ -39,6 +40,10 @@ MAP_MAX_Y = 9  #Height of the Map
 
 my_tensor = tf.Variable(0, dtype=tf.float32)  # initial value = 0
 
+
+tf.summary.scalar('time_append', my_tensor)
+tf.summary.scalar('time_take_samples', my_tensor)
+tf.summary.scalar('time_train', my_tensor)
 #tf.summary.scalar('episode avg_loss', my_tensor)
 tf.summary.scalar('episode reward', my_tensor)
 tf.summary.scalar('episode avg_reward', my_tensor)
@@ -50,6 +55,9 @@ merged_summary_op = tf.summary.merge_all()
 current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 log_dir = 'Logs/' + current_time
 summary_writer = tf.summary.FileWriter(log_dir)
+
+log_dir_2 = 'Logs/check_time_' + current_time
+summary_writer_time = tf.summary.FileWriter(log_dir_2)
 
 # Initialize a DQN model and a memory batch for storing experiences
 DQNAgent = DQN(INPUT_SHAPE_1, INPUT_SHAPE_2, ACTION_NUM)
@@ -63,6 +71,8 @@ minerEnv.start()  # Connect to the game
 train = False #The variable is used to indicate that the replay starts, and the epsilon starts decrease.
 #Training Process
 #the main part of the deep-q learning agorithm
+
+total_step = 0
 
 for episode_i in range(0, N_EPISODE):
     try:
@@ -85,9 +95,11 @@ for episode_i in range(0, N_EPISODE):
         score = 0  # Khoi added
         # episode_loss = 0
         step = 0
+
         # Start an episode for training
         for step in range(0, maxStep):
-            if DQNAgent.epsilon > 0.9 and minerEnv.state.mapInfo.gold_amount(minerEnv.state.x, minerEnv.state.y) > 0 \
+            total_step += 1
+            if DQNAgent.epsilon > 0.8 and minerEnv.state.mapInfo.gold_amount(minerEnv.state.x, minerEnv.state.y) > 0 \
                                     and minerEnv.state.energy > 10:
                 action = 5
             else:
@@ -96,22 +108,39 @@ for episode_i in range(0, N_EPISODE):
             reward = minerEnv.get_reward()  # Getting a reward
             new_state_map, new_state_users = minerEnv.get_state()  # Getting a new state
             terminate = minerEnv.check_terminate()  # Checking the end status of the episode
+            
+            t1=0
+            t2=0
+            t3=0
 
             # Add this transition to the memory batch
+            tmp_t1 = time.time()
             memory.append(state_map, state_users, action, reward, new_state_map, new_state_users, terminate)
+            t1 = time.time() - tmp_t1
 
             # Sample batch memory to train network
             if memory.size > INITIAL_REPLAY_SIZE:
                 # If there are INITIAL_REPLAY_SIZE experiences in the memory batch
                 # then start replaying
+                tmp_t2 = time.time()
                 batch = memory.sample(BATCH_SIZE)  # Get a BATCH_SIZE experiences for replaying
+                t2 = time.time() - tmp_t2
+                tmp_t3 = time.time()
                 DQNAgent.replay(batch, BATCH_SIZE)  # Do relaying
+                t3 = time.time() - tmp_t3
                 train = True  # Indicate the training starts
             episode_reward += reward  # Plus the reward to the total reward of the episode
             state_map = new_state_map  # Assign the next state for the next step.
             state_users = new_state_users  # Assign the next state for the next step.
 
             score = minerEnv.state.score
+
+            summary_2 = tf.Summary()
+            summary_2.value.add(tag='time_append', simple_value=t1)
+            summary_2.value.add(tag='time_take_samples', simple_value=t2)
+            summary_2.value.add(tag='time_train', simple_value=t3)
+            summary_writer_time.add_summary(summary_2, total_step)
+            summary_writer_time.flush()
 
             # check again, when we need to save ?????????????????????????????????????????????????????
             # Saving data to file
