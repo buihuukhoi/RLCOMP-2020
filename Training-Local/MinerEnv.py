@@ -152,7 +152,7 @@ class MinerEnv:
         max_reward = 50
         reward_died = -50  # ~ double max reward
         # reward_died = -25  # let a try
-        reward_enter_goal = 2.5
+        reward_enter_goal = max_reward / 20
 
         # Calculate reward
         reward = 0  # moving, because agent will die at the max step
@@ -172,8 +172,8 @@ class MinerEnv:
         #    reward = reward_died
 
         # mining but cannot get goal, ==> a larger negative reward
-        # elif (int(self.state.lastAction) == 5) and (score_action == 0):
-        #    reward = reward_died/10
+        elif (int(self.state.lastAction) == 5) and (score_action == 0):
+            reward = reward_died / 10
 
         # relax when energy > 40
         # elif self.energy_pre > 40 and int(self.state.lastAction) == 4:
