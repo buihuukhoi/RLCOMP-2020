@@ -20,7 +20,7 @@ class DQN:
             #gamma=0.9
             epsilon=1,  # Epsilon - the exploration factor
             epsilon_min=0.01,  # The minimum epsilon
-            epsilon_decay=0.9999,  # The decay epsilon for each update_epsilon time
+            epsilon_decay=0.999975,  # The decay epsilon for each update_epsilon time
             #epsilon_decay=0.999975,  # The decay epsilon for each update_epsilon time
             learning_rate=0.0001,  # The learning rate for the DQN network
             tau=0.125,  # The factor for updating the DQN target network from the DQN network
@@ -112,7 +112,8 @@ class DQN:
 
     def get_qs(self, state_map, state_users):
         # check shape again ??????????????????????????
-        return self.model.predict({"state_map": state_map.reshape(1, 21, 9, 7), "state_users": state_users.reshape(1, 60)})
+        return self.model.predict({"state_map": state_map.reshape(1, 21, 9, 7),
+                                   "state_users": state_users.reshape(1, (2 + 8 + 6) * 4)})
 
     def act(self, state_map, state_users):
         # Get the index of the maximum Q values

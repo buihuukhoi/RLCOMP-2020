@@ -7,7 +7,7 @@ import tensorflow as tf
 import pandas as pd
 import datetime
 import numpy as np
-import time
+#import time
 
 #import matplotlib.pyplot as plt
 
@@ -26,14 +26,14 @@ with open(filename, 'w') as f:
 
 # Parameters for training a DQN model
 # N_EPISODE = 10000  # The number of episodes for training
-N_EPISODE = 1000000  # The number of episodes for training
+N_EPISODE = 10000000  # The number of episodes for training
 # MAX_STEP = 1000   #The number of steps for each episode
-BATCH_SIZE = 64  #128 # or 256  #The number of experiences for each replay
+BATCH_SIZE = 51200  #128 # or 256  #The number of experiences for each replay
 MEMORY_SIZE = 1000000  # tang dan -->>>>  # The size of the batch for storing experiences
-SAVE_NETWORK = 500  # After this number of episodes, the DQN model is saved for testing later.
-INITIAL_REPLAY_SIZE = 21*9*6*3  # The number of experiences are stored in the memory batch before starting replaying
+SAVE_NETWORK = 5000  # After this number of episodes, the DQN model is saved for testing later.
+INITIAL_REPLAY_SIZE = 64000 * 4  # The number of experiences are stored in the memory batch before starting replaying
 INPUT_SHAPE_1 = (21, 9, 7)  # The number of input values for the DQN model
-INPUT_SHAPE_2 = (60,)
+INPUT_SHAPE_2 = ((2 + 8 + 6) * 4,)
 ACTION_NUM = 6  # The number of actions output from the DQN model
 MAP_MAX_X = 21 #Width of the Map
 MAP_MAX_Y = 9  #Height of the Map
@@ -41,9 +41,9 @@ MAP_MAX_Y = 9  #Height of the Map
 my_tensor = tf.Variable(0, dtype=tf.float32)  # initial value = 0
 
 
-tf.summary.scalar('time_append', my_tensor)
-tf.summary.scalar('time_take_samples', my_tensor)
-tf.summary.scalar('time_train', my_tensor)
+#tf.summary.scalar('time_append', my_tensor)
+#tf.summary.scalar('time_take_samples', my_tensor)
+#tf.summary.scalar('time_train', my_tensor)
 #tf.summary.scalar('episode avg_loss', my_tensor)
 tf.summary.scalar('episode reward', my_tensor)
 tf.summary.scalar('episode avg_reward', my_tensor)
@@ -56,11 +56,11 @@ current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 log_dir = 'Logs/' + current_time
 summary_writer = tf.summary.FileWriter(log_dir)
 
-log_dir_2 = 'Logs/check_time_' + current_time
-summary_writer_time = tf.summary.FileWriter(log_dir_2)
+#log_dir_2 = 'Logs/check_time_' + current_time
+#summary_writer_time = tf.summary.FileWriter(log_dir_2)
 
 # Initialize a DQN model and a memory batch for storing experiences
-DQNAgent = DQN(INPUT_SHAPE_1, INPUT_SHAPE_2, ACTION_NUM)
+DQNAgent = DQN(INPUT_SHAPE_1, INPUT_SHAPE_2, ACTION_NUM, epsilon_decay=0.999995)
 DQNAgent.update_target_model()
 memory = Memory(MEMORY_SIZE)
 
@@ -109,45 +109,43 @@ for episode_i in range(0, N_EPISODE):
             new_state_map, new_state_users = minerEnv.get_state()  # Getting a new state
             terminate = minerEnv.check_terminate()  # Checking the end status of the episode
             
-            t1=0
-            t2=0
-            t3=0
+            #t1=0
+            #t2=0
+            #t3=0
 
             # Add this transition to the memory batch
-            tmp_t1 = time.time()
+            #tmp_t1 = time.time()
             memory.append(state_map, state_users, action, reward, new_state_map, new_state_users, terminate)
-            t1 = time.time() - tmp_t1
+            #t1 = time.time() - tmp_t1
 
-            # Sample batch memory to train network
-            if memory.size > INITIAL_REPLAY_SIZE:
-                # If there are INITIAL_REPLAY_SIZE experiences in the memory batch
-                # then start replaying
-                tmp_t2 = time.time()
-                batch = memory.sample(BATCH_SIZE)  # Get a BATCH_SIZE experiences for replaying
-                t2 = time.time() - tmp_t2
-                tmp_t3 = time.time()
-                DQNAgent.replay(batch, BATCH_SIZE)  # Do relaying
-                t3 = time.time() - tmp_t3
-                train = True  # Indicate the training starts
             episode_reward += reward  # Plus the reward to the total reward of the episode
             state_map = new_state_map  # Assign the next state for the next step.
             state_users = new_state_users  # Assign the next state for the next step.
 
             score = minerEnv.state.score
-
+            """
             summary_2 = tf.Summary()
             summary_2.value.add(tag='time_append', simple_value=t1)
             summary_2.value.add(tag='time_take_samples', simple_value=t2)
             summary_2.value.add(tag='time_train', simple_value=t3)
             summary_writer_time.add_summary(summary_2, total_step)
             summary_writer_time.flush()
-
+            """
             # check again, when we need to save ?????????????????????????????????????????????????????
             # Saving data to file
-            save_data = np.hstack(
-                [episode_i + 1, step + 1, score, reward, episode_reward, action, DQNAgent.epsilon, terminate]).reshape(1, 8)
-            with open(filename, 'a') as f:
-                pd.DataFrame(save_data).to_csv(f, encoding='utf-8', index=False, header=False)
+            #save_data = np.hstack(
+            #    [episode_i + 1, step + 1, score, reward, episode_reward, action, DQNAgent.epsilon, terminate]).reshape(1, 8)
+            #with open(filename, 'a') as f:
+            #    pd.DataFrame(save_data).to_csv(f, encoding='utf-8', index=False, header=False)
+
+            # Sample batch memory to train network
+            if memory.size >= INITIAL_REPLAY_SIZE and np.mod(total_step, 64000) == 0:
+                # If there are INITIAL_REPLAY_SIZE experiences in the memory batch
+                # then start replaying
+                for i in range(5):
+                    batch = memory.sample(BATCH_SIZE)  # Get a BATCH_SIZE experiences for replaying
+                    DQNAgent.replay(batch, BATCH_SIZE)  # Do relaying
+                    train = True  # Indicate the training starts
 
             if terminate:
                 # If the episode ends, then go to the next episode
@@ -165,7 +163,8 @@ for episode_i in range(0, N_EPISODE):
 
         # check again ??????????????????????????????????????????????????????????
         # Iteration to save the network architecture and weights
-        if np.mod(episode_i + 1, SAVE_NETWORK) == 0 and train == True:
+        #if np.mod(episode_i + 1, SAVE_NETWORK) == 0 and train == True:
+        if np.mod(total_step, 512000) == 0 and train == True:
             DQNAgent.update_target_model()  # Replace the learning weights for target model with soft replacement
             # Save the DQN model
             now = datetime.datetime.now()  # Get the latest datetime
@@ -173,8 +172,8 @@ for episode_i in range(0, N_EPISODE):
                                 "DQNmodel_" + now.strftime("%Y%m%d-%H%M") + "_ep" + str(episode_i + 1))
 
         # Print the training information after the episode
-        print('Episode %d ends. Number of steps is: %d. Accumulated Reward = %.4f. Score = %d. Epsilon = %.2f .Termination code: %d' % (
-            episode_i + 1, step + 1, episode_reward, score, DQNAgent.epsilon, terminate))
+        print('Episode %d ends. Number of steps is: %d. Accumulated Reward = %.4f. Score = %d. Epsilon = %.2f .Termination code: %d . Total step: %d' % (
+            episode_i + 1, step + 1, episode_reward, score, DQNAgent.epsilon, terminate, total_step))
 
         # Decreasing the epsilon if the replay starts
         if train is True and DQNAgent.epsilon > DQNAgent.epsilon_min:
