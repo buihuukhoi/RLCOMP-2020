@@ -147,6 +147,16 @@ for episode_i in range(0, N_EPISODE):
                     DQNAgent.replay(batch, BATCH_SIZE)  # Do relaying
                     train = True  # Indicate the training starts
 
+            # check again ??????????????????????????????????????????????????????????
+            # Iteration to save the network architecture and weights
+            # if np.mod(episode_i + 1, SAVE_NETWORK) == 0 and train == True:
+            if np.mod(total_step, 512000) == 0 and train == True:
+                DQNAgent.update_target_model()  # Replace the learning weights for target model with soft replacement
+                # Save the DQN model
+                now = datetime.datetime.now()  # Get the latest datetime
+                DQNAgent.save_model("TrainedModels/",
+                                    "DQNmodel_" + now.strftime("%Y%m%d-%H%M") + "_ep" + str(episode_i + 1))
+
             if terminate:
                 # If the episode ends, then go to the next episode
                 break
@@ -160,16 +170,6 @@ for episode_i in range(0, N_EPISODE):
         summary.value.add(tag='episode epsilon', simple_value=DQNAgent.epsilon)
         summary_writer.add_summary(summary, episode_i)
         summary_writer.flush()
-
-        # check again ??????????????????????????????????????????????????????????
-        # Iteration to save the network architecture and weights
-        #if np.mod(episode_i + 1, SAVE_NETWORK) == 0 and train == True:
-        if np.mod(total_step, 512000) == 0 and train == True:
-            DQNAgent.update_target_model()  # Replace the learning weights for target model with soft replacement
-            # Save the DQN model
-            now = datetime.datetime.now()  # Get the latest datetime
-            DQNAgent.save_model("TrainedModels/",
-                                "DQNmodel_" + now.strftime("%Y%m%d-%H%M") + "_ep" + str(episode_i + 1))
 
         # Print the training information after the episode
         print('Episode %d ends. Number of steps is: %d. Accumulated Reward = %.4f. Score = %d. Epsilon = %.2f .Termination code: %d . Total step: %d' % (
