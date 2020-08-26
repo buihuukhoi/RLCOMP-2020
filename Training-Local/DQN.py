@@ -139,15 +139,17 @@ class DQN:
         dones = np.array([transition[6] for transition in samples])
 
         current_qs_list = self.model.predict({"state_map": states_map, "state_users": states_users})
-        new_qs_list = self.target_model.predict({"state_map": new_states_map, "state_users": new_states_users})
+        new_qs_list_1 = self.model.predict({"state_map": new_states_map, "state_users": new_states_users})
+        new_qs_list_2 = self.target_model.predict({"state_map": new_states_map, "state_users": new_states_users})
 
         for i in range(0, batch_size):
             if dones[i]:
                 new_q = rewards[i]  # if terminated ==> no new_state ==> only equals reward
             else:
                 # check input shape again ?????????????????????????????????????????????????????????
-                max_new_qs = np.max(new_qs_list[i])
-                new_q = rewards[i] + self.gamma * max_new_qs
+                argmax_new_qs_1 = np.argmax(new_qs_list_1[i])
+                new_qs_2 = new_qs_list_2[i][argmax_new_qs_1]
+                new_q = rewards[i] + self.gamma * new_qs_2
 
             current_qs = current_qs_list[i]
             current_qs[actions[i]] = new_q

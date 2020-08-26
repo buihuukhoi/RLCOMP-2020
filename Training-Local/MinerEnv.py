@@ -84,6 +84,12 @@ class MinerEnv:
                 view_1[i, j, min_energy_depth] = 1 / max_energy
                 view_1[i, j, max_energy_depth] = 1 / max_energy
 
+                goal = self.state.mapInfo.gold_amount(i, j)
+                if goal > 0:
+                    view_1[i, j, min_energy_depth] = 4 / max_energy
+                    view_1[i, j, max_energy_depth] = 4 / max_energy
+                    view_1[i, j, goal_depth] = goal / max_goal
+
         for obstacle in self.state.mapInfo.obstacles:
             i = obstacle["posx"]
             j = obstacle["posy"]
@@ -91,18 +97,20 @@ class MinerEnv:
                 view_1[i, j, min_energy_depth] = 5 / max_energy  # 5~20
                 view_1[i, j, max_energy_depth] = 20 / max_energy  # 5~20
             elif obstacle["type"] == TrapID:  # Trap
-                view_1[i, j, min_energy_depth] = 10 / max_energy
-                view_1[i, j, max_energy_depth] = 10 / max_energy
+                view_1[i, j, min_energy_depth] = -obstacle["value"] / max_energy
+                view_1[i, j, max_energy_depth] = -obstacle["value"] / max_energy
             elif obstacle["type"] == SwampID:  # Swamp
                 view_1[i, j, min_energy_depth] = -obstacle["value"] / max_energy  # 5, 20, 40, 100
                 view_1[i, j, max_energy_depth] = -obstacle["value"] / max_energy  # 5, 20, 40, 100
 
+        """
         for goal in self.state.mapInfo.golds:
             i = goal["posx"]
             j = goal["posy"]
             view_1[i, j, min_energy_depth] = 4 / max_energy
             view_1[i, j, max_energy_depth] = 4 / max_energy
             view_1[i, j, goal_depth] = goal["amount"] / max_goal
+        """
 
         # Add player's information
         view_2 = np.zeros([len_player_infor * 4], dtype=float)
