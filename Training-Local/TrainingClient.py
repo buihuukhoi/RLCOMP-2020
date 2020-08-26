@@ -28,7 +28,7 @@ with open(filename, 'w') as f:
 # N_EPISODE = 10000  # The number of episodes for training
 N_EPISODE = 10000000  # The number of episodes for training
 # MAX_STEP = 1000   #The number of steps for each episode
-BATCH_SIZE = 51200  #128 # or 256  #The number of experiences for each replay
+BATCH_SIZE = 64000  #128 # or 256  #The number of experiences for each replay
 MEMORY_SIZE = 1000000  # tang dan -->>>>  # The size of the batch for storing experiences
 SAVE_NETWORK = 5000  # After this number of episodes, the DQN model is saved for testing later.
 INITIAL_REPLAY_SIZE = 64000 * 4  # The number of experiences are stored in the memory batch before starting replaying
@@ -150,7 +150,7 @@ for episode_i in range(0, N_EPISODE):
             # check again ??????????????????????????????????????????????????????????
             # Iteration to save the network architecture and weights
             # if np.mod(episode_i + 1, SAVE_NETWORK) == 0 and train == True:
-            if np.mod(total_step, 512000) == 0 and train == True:
+            if np.mod(total_step, 1280000) == 0 and train == True:
                 DQNAgent.update_target_model()  # Replace the learning weights for target model with soft replacement
                 # Save the DQN model
                 now = datetime.datetime.now()  # Get the latest datetime
