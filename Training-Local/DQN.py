@@ -61,6 +61,7 @@ class DQN:
         # concat = Concatenate()([flatten_1, flatten_2])
         concat = concatenate([flatten_1, x2])
         d = Dense(512, activation='relu')(concat)
+        d = Dense(64, activation='relu')(d)
         d = Dense(self.action_space, activation="linear")(d)
 
         model = Model(inputs=[x1, x2], outputs=d)

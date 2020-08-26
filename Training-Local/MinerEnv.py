@@ -130,10 +130,10 @@ class MinerEnv:
                     if "energy" in player:  # > 1 step
                         if player["status"] == self.state.STATUS_PLAYING:
                             view_1[player["posx"], player["posy"], bot_depth] = 1
-                        view_2[index_player * len_player_infor + 0] = player["energy"] / max_player_energy
-                        view_2[index_player * len_player_infor + 1] = player["score"] / max_score
-                        view_2[index_player * len_player_infor + 2 + player["lastAction"]] = 1  # one hot
-                        view_2[index_player * len_player_infor + 2 + max_last_action + 1 + player["status"]] = 1
+                            view_2[index_player * len_player_infor + 0] = player["energy"] / max_player_energy
+                            view_2[index_player * len_player_infor + 1] = player["score"] / max_score
+                            view_2[index_player * len_player_infor + 2 + player["lastAction"]] = 1  # one hot
+                            view_2[index_player * len_player_infor + 2 + max_last_action + 1 + player["status"]] = 1
                     else:  # 0 step, initial state
                         view_1[player["posx"], player["posy"], bot_depth] = 1
                         view_2[index_player * len_player_infor + 0] = 50 / max_player_energy
@@ -147,14 +147,18 @@ class MinerEnv:
 
         return DQNState_map, DQNState_users
 
-    def get_reward(self):
+    def get_reward(self, epsilon):
         # return -0.01 ~ 0.01
         # reward must target to mine goal
 
         max_reward = 50
         reward_died = -50  # ~ double max reward
         # reward_died = -25  # let a try
-        reward_enter_goal = max_reward / 5
+        reward_enter_goal = 0
+        if epsilon > 0.3:
+            reward_enter_goal = max_reward / 5
+        else:
+            reward_enter_goal = max_reward / 20
 
         # Calculate reward
         reward = 0  # moving, because agent will die at the max step
@@ -174,16 +178,16 @@ class MinerEnv:
         #    reward = reward_died
 
         # mining but cannot get goal, ==> a larger negative reward
-        elif (int(self.state.lastAction) == 5) and (score_action == 0):
-            reward = reward_died / 2
+        #elif (int(self.state.lastAction) == 5) and (score_action == 0):
+        #    reward = reward_died / 2
 
         # relax when energy > 40
-        elif self.energy_pre > 40 and int(self.state.lastAction) == 4:
-            reward = reward_died / 4
+        #elif self.energy_pre > 40 and int(self.state.lastAction) == 4:
+        #    reward = reward_died / 4
 
         # relax but cannot get more energy
-        elif int(self.state.lastAction) == 4 and energy_action == 0:
-            reward = reward_died / 4
+        #elif int(self.state.lastAction) == 4 and energy_action == 0:
+        #    reward = reward_died / 4
 
         # If out of the map, then the DQN agent should be punished by a larger negative reward.
         if self.state.status == State.STATUS_ELIMINATED_WENT_OUT_MAP:

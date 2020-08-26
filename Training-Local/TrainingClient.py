@@ -60,7 +60,7 @@ summary_writer = tf.summary.FileWriter(log_dir)
 #summary_writer_time = tf.summary.FileWriter(log_dir_2)
 
 # Initialize a DQN model and a memory batch for storing experiences
-DQNAgent = DQN(INPUT_SHAPE_1, INPUT_SHAPE_2, ACTION_NUM, epsilon_decay=0.999995)
+DQNAgent = DQN(INPUT_SHAPE_1, INPUT_SHAPE_2, ACTION_NUM, epsilon_decay=0.999995, epsilon_min=0.1)
 DQNAgent.update_target_model()
 memory = Memory(MEMORY_SIZE)
 
@@ -99,13 +99,13 @@ for episode_i in range(0, N_EPISODE):
         # Start an episode for training
         for step in range(0, maxStep):
             total_step += 1
-            if DQNAgent.epsilon > 0.8 and minerEnv.state.mapInfo.gold_amount(minerEnv.state.x, minerEnv.state.y) > 0 \
-                                    and minerEnv.state.energy > 10:
-                action = 5
-            else:
-                action = DQNAgent.act(state_map, state_users)  # Getting an action from the DQN model from the state (s)
+            #if DQNAgent.epsilon > 0.8 and minerEnv.state.mapInfo.gold_amount(minerEnv.state.x, minerEnv.state.y) > 0 \
+            #                        and minerEnv.state.energy > 10:
+            #    action = 5
+            #else:
+            action = DQNAgent.act(state_map, state_users)  # Getting an action from the DQN model from the state (s)
             minerEnv.step(str(action))  # Performing the action in order to obtain the new state
-            reward = minerEnv.get_reward()  # Getting a reward
+            reward = minerEnv.get_reward(DQNAgent.epsilon)  # Getting a reward
             new_state_map, new_state_users = minerEnv.get_state()  # Getting a new state
             terminate = minerEnv.check_terminate()  # Checking the end status of the episode
             

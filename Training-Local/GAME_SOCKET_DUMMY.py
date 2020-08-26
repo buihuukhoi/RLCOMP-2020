@@ -6,7 +6,10 @@ import math
 from bot1 import Bot1
 from bot2 import Bot2
 from bot3 import Bot3
+from bot4 import Bot4
 from random import randrange
+import copy
+import numpy as np
 
 
 class ObstacleInfo:
@@ -119,7 +122,16 @@ class GameSocket:
         self.craftMap = {}  # cells that players craft at current step, key: x_y, value: number of players that craft at (x,y)
 
     def init_bots(self):
-        self.bots = [Bot1(2), Bot2(3), Bot3(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
+        #self.bots = [Bot1(2), Bot2(3), Bot3(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
+        tmp_random = randrange(4)
+        if tmp_random == 0:
+            self.bots = [Bot2(2), Bot3(3), Bot4(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
+        elif tmp_random == 1:
+            self.bots = [Bot1(2), Bot3(3), Bot4(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
+        elif tmp_random == 2:
+            self.bots = [Bot1(2), Bot2(3), Bot4(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
+        else:
+            self.bots = [Bot1(2), Bot2(3), Bot3(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
         for (bot) in self.bots:  # at the beginning, all bots will have same position, energy as player
             bot.info.posx = self.user.posx
             bot.info.posy = self.user.posy
@@ -154,11 +166,38 @@ class GameSocket:
 
     def reset_map(self, id):  # load map info
         self.mapId = id
-        self.map = json.loads(self.maps[self.mapId])
+
+        # Generate Maps
+        gold_value = [0,
+                      50, 100, 150, 200, 250, 300, 350, 400, 450, 500,
+                      550, 600, 650, 700, 750, 800, 850, 900, 950, 1000,
+                      1050, 1100, 1150, 1200, 1250, 1300, 1350, 1400, 1450, 1500,
+                      1550, 1600, 1650, 1700, 1750, 1800, 1850, 1900, 1950, 2000]
+
+        gold_prob = [0.1,
+                     0.1, 0.1, 0.0725, 0.0725, 0.0725, 0.0725, 0.051, 0.051, 0.051, 0.051,
+                     0.0275, 0.0275, 0.0275, 0.0275, 0.015, 0.015, 0.015, 0.015, 0.015, 0.015,
+                     0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005,
+                     0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001]
+
+        tmp_map = json.loads(self.maps[self.mapId])
+
+        for row in tmp_map:
+            for i in range(21):
+                if int(row[i]) >= 0:
+                    if np.random.random() < 60/80:
+                        row[i] = 0
+                    else:
+                        row[i] = int(np.random.choice(gold_value, p=gold_prob))  # max 2000
+
+        #self.map = json.loads(self.maps[self.mapId])
+        self.map = copy.deepcopy(tmp_map)
         self.userMatch = self.map_info(self.map)
         self.stepState.golds = self.userMatch.gameinfo.golds
-        self.map = json.loads(self.maps[self.mapId])
-        self.energyOnMap = json.loads(self.maps[self.mapId])
+        #self.map = json.loads(self.maps[self.mapId])
+        self.map = copy.deepcopy(tmp_map)
+        #self.energyOnMap = json.loads(self.maps[self.mapId])
+        self.energyOnMap = copy.deepcopy(tmp_map)
         for x in range(len(self.map)):
             for y in range(len(self.map[x])):
                 if self.map[x][y] > 0:  # gold
