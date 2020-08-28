@@ -7,9 +7,8 @@ import tensorflow as tf
 import pandas as pd
 import datetime
 import numpy as np
+from random import random
 #import time
-
-#import matplotlib.pyplot as plt
 
 HOST = "localhost"
 PORT = 1111
@@ -28,10 +27,10 @@ with open(filename, 'w') as f:
 # N_EPISODE = 10000  # The number of episodes for training
 N_EPISODE = 10000000  # The number of episodes for training
 # MAX_STEP = 1000   #The number of steps for each episode
-BATCH_SIZE = 64000  #128 # or 256  #The number of experiences for each replay
+BATCH_SIZE = 96000  #128 # or 256  #The number of experiences for each replay
 MEMORY_SIZE = 1000000  # tang dan -->>>>  # The size of the batch for storing experiences
 SAVE_NETWORK = 5000  # After this number of episodes, the DQN model is saved for testing later.
-INITIAL_REPLAY_SIZE = 64000 * 4  # The number of experiences are stored in the memory batch before starting replaying
+INITIAL_REPLAY_SIZE = 96000 * 2  # The number of experiences are stored in the memory batch before starting replaying
 INPUT_SHAPE_1 = (21, 9, 7)  # The number of input values for the DQN model
 INPUT_SHAPE_2 = ((2 + 8 + 6) * 4,)
 ACTION_NUM = 6  # The number of actions output from the DQN model
@@ -60,7 +59,7 @@ summary_writer = tf.summary.FileWriter(log_dir)
 #summary_writer_time = tf.summary.FileWriter(log_dir_2)
 
 # Initialize a DQN model and a memory batch for storing experiences
-DQNAgent = DQN(INPUT_SHAPE_1, INPUT_SHAPE_2, ACTION_NUM, epsilon_decay=0.999995, epsilon_min=0.1)
+DQNAgent = DQN(INPUT_SHAPE_1, INPUT_SHAPE_2, ACTION_NUM, epsilon_decay=0.99999, epsilon_min=0.1)
 DQNAgent.update_target_model()
 memory = Memory(MEMORY_SIZE)
 
@@ -99,11 +98,14 @@ for episode_i in range(0, N_EPISODE):
         # Start an episode for training
         for step in range(0, maxStep):
             total_step += 1
-            #if DQNAgent.epsilon > 0.8 and minerEnv.state.mapInfo.gold_amount(minerEnv.state.x, minerEnv.state.y) > 0 \
-            #                        and minerEnv.state.energy > 10:
-            #    action = 5
-            #else:
-            action = DQNAgent.act(state_map, state_users)  # Getting an action from the DQN model from the state (s)
+            if random() < DQNAgent.epsilon \
+                    and minerEnv.state.mapInfo.gold_amount(minerEnv.state.x, minerEnv.state.y) > 0:
+                if minerEnv.state.energy > 10:
+                    action = 5
+                else:
+                    action = 4
+            else:
+                action = DQNAgent.act(state_map, state_users)  # Getting an action from the DQN model from the state (s)
             minerEnv.step(str(action))  # Performing the action in order to obtain the new state
             reward = minerEnv.get_reward(DQNAgent.epsilon)  # Getting a reward
             new_state_map, new_state_users = minerEnv.get_state()  # Getting a new state
@@ -139,10 +141,10 @@ for episode_i in range(0, N_EPISODE):
             #    pd.DataFrame(save_data).to_csv(f, encoding='utf-8', index=False, header=False)
 
             # Sample batch memory to train network
-            if memory.size >= INITIAL_REPLAY_SIZE and np.mod(total_step, 64000) == 0:
+            if memory.size >= INITIAL_REPLAY_SIZE and np.mod(total_step, 96000) == 0:
                 # If there are INITIAL_REPLAY_SIZE experiences in the memory batch
                 # then start replaying
-                for i in range(5):
+                for i in range(10):
                     batch = memory.sample(BATCH_SIZE)  # Get a BATCH_SIZE experiences for replaying
                     DQNAgent.replay(batch, BATCH_SIZE)  # Do relaying
                     train = True  # Indicate the training starts
