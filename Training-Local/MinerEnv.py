@@ -45,7 +45,7 @@ class MinerEnv:
             traceback.print_exc()
 
     # Functions are customized by client
-    def get_state(self):
+    def get_state(self, initial_flag=False):
         # update pre position, score, energy
         #self.x_pre = self.state.x
         #self.y_pre = self.state.y
@@ -142,7 +142,7 @@ class MinerEnv:
                             view_2[index_player * len_player_infor + 1] = player["score"] / max_score
                             view_2[index_player * len_player_infor + 2 + player["lastAction"]] = 1  # one hot
                             view_2[index_player * len_player_infor + 2 + max_last_action + 1 + player["status"]] = 1
-                    else:  # 0 step, initial state
+                    elif initial_flag:  # 0 step, initial state
                         view_1[player["posx"], player["posy"], bot_depth] = 1
                         view_2[index_player * len_player_infor + 0] = 50 / max_player_energy
                         view_2[index_player * len_player_infor + 1] = 0 / max_score
@@ -171,41 +171,48 @@ class MinerEnv:
         energy_action = self.state.energy - self.energy_pre  # < 0 if not relax
         score_action = self.state.score - self.score_pre  # >= 0
 
-        reward += score_action
+        if score_action > 0:
+            reward = score_action / 2500  # max ~2500 / episode
+        else:
+            # moving
+            if int(self.state.lastAction) < 4:
+                # enter gold
+                if self.state.mapInfo.gold_amount(self.state.x, self.state.y) > 0:
+                    reward = reward_enter_goal / 2500
+            # mining but cannot get gold
+            #elif (int(self.state.lastAction) == 5) and (score_action == 0):
+            #    reward = reward_died / 10 / max_reward
+            # relax when energy > 40 or cannot get more energy
+            #elif int(self.state.lastAction) == 4:
+            #    if self.energy_pre > 40 or energy_action == 0:
+            #        reward = reward_died / 50 / max_reward
 
-        # moving
-        if int(self.state.lastAction) < 4:
-            # enter gold
-            if self.state.mapInfo.gold_amount(self.state.x, self.state.y) > 0:
-                reward = reward_enter_goal
-        # mining but cannot get gold
-        elif (int(self.state.lastAction) == 5) and (score_action == 0):
-            reward = reward_died / 5
+            # at gold but move to ground
+            # if (int(self.state.lastAction) < 4) and (self.state.mapInfo.gold_amount(self.x_pre, self.y_pre) > 0) \
+            #        and (self.state.mapInfo.gold_amount(self.state.x, self.state.y) == 0):
+            #    reward = reward_died
 
-        # at gold but move to ground
-        # if (int(self.state.lastAction) < 4) and (self.state.mapInfo.gold_amount(self.x_pre, self.y_pre) > 0) \
-        #        and (self.state.mapInfo.gold_amount(self.state.x, self.state.y) == 0):
-        #    reward = reward_died
+            # relax when energy > 40
+            #elif self.energy_pre > 40 and int(self.state.lastAction) == 4:
+            #    reward = reward_died / 4
 
-        # relax when energy > 40
-        #elif self.energy_pre > 40 and int(self.state.lastAction) == 4:
-        #    reward = reward_died / 4
-
-        # relax but cannot get more energy
-        #elif int(self.state.lastAction) == 4 and energy_action == 0:
-        #    reward = reward_died / 4
+            # relax but cannot get more energy
+            #elif int(self.state.lastAction) == 4 and energy_action == 0:
+            #    reward = reward_died / 4
 
         # If out of the map, then the DQN agent should be punished by a larger negative reward.
-        if self.state.status == State.STATUS_ELIMINATED_WENT_OUT_MAP:
-            reward = reward_died
+        #if self.state.status == State.STATUS_ELIMINATED_WENT_OUT_MAP or self.state.status == State.STATUS_ELIMINATED_INVALID_ACTION:
+        #    reward = reward_died / max_reward
 
-        # Run out of energy, then the DQN agent should be punished by a larger negative reward.
-        if self.state.status == State.STATUS_ELIMINATED_OUT_OF_ENERGY:
-            reward = reward_died
+        #elif self.state.status == State.STATUS_ELIMINATED_OUT_OF_ENERGY or self.state.status == State.STATUS_STOP_EMPTY_GOLD \
+        #        or self.state.status == State.STATUS_STOP_END_STEP:
+        if self.state.status != State.STATUS_PLAYING:
+            if self.state.score == 0:
+                reward = reward_died / max_reward  # -1
 
         # print ("reward",reward)
-        return reward / max_reward / self.state.mapInfo.maxStep  # 100 steps
-        # return reward / max_reward
+        #return reward / max_reward / self.state.mapInfo.maxStep  # 100 steps
+        return reward
 
     def check_terminate(self):
         # Checking the status of the game

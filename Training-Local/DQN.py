@@ -22,7 +22,7 @@ class DQN:
             epsilon_min=0.01,  # The minimum epsilon
             epsilon_decay=0.999975,  # The decay epsilon for each update_epsilon time
             #epsilon_decay=0.999975,  # The decay epsilon for each update_epsilon time
-            learning_rate=0.0001,  # The learning rate for the DQN network
+            learning_rate=0.00025,  # The learning rate for the DQN network
             tau=0.125,  # The factor for updating the DQN target network from the DQN network
             sess=None,
     ):
@@ -139,7 +139,7 @@ class DQN:
         dones = np.array([transition[6] for transition in samples])
 
         current_qs_list = self.model.predict({"state_map": states_map, "state_users": states_users})
-        new_qs_list_1 = self.model.predict({"state_map": new_states_map, "state_users": new_states_users})
+        # new_qs_list_1 = self.model.predict({"state_map": new_states_map, "state_users": new_states_users})
         new_qs_list_2 = self.target_model.predict({"state_map": new_states_map, "state_users": new_states_users})
 
         for i in range(0, batch_size):
@@ -147,8 +147,8 @@ class DQN:
                 new_q = rewards[i]  # if terminated ==> no new_state ==> only equals reward
             else:
                 # check input shape again ?????????????????????????????????????????????????????????
-                argmax_new_qs_1 = np.argmax(new_qs_list_1[i])
-                new_qs_2 = new_qs_list_2[i][argmax_new_qs_1]
+                # argmax_new_qs_1 = np.argmax(new_qs_list_1[i])
+                new_qs_2 = np.max(new_qs_list_2[i])
                 new_q = rewards[i] + self.gamma * new_qs_2
 
             current_qs = current_qs_list[i]
@@ -161,7 +161,9 @@ class DQN:
         inputs_map = np.array(inputs_map)
         inputs_users = np.array(inputs_users)
         targets = np.array(targets)
-        loss = self.model.train_on_batch({"state_map": inputs_map, "state_users": inputs_users}, targets)
+        #loss = self.model.train_on_batch({"state_map": inputs_map, "state_users": inputs_users}, targets)
+        loss = self.model.fit({"state_map": inputs_map, "state_users": inputs_users}, targets, batch_size=1024,
+                              shuffle=False)
 
     def update_target_model(self):
         weights = self.model.get_weights()

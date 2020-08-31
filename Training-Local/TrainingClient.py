@@ -27,10 +27,10 @@ with open(filename, 'w') as f:
 # N_EPISODE = 10000  # The number of episodes for training
 N_EPISODE = 10000000  # The number of episodes for training
 # MAX_STEP = 1000   #The number of steps for each episode
-BATCH_SIZE = 96000  #128 # or 256  #The number of experiences for each replay
-MEMORY_SIZE = 1000000  # tang dan -->>>>  # The size of the batch for storing experiences
+BATCH_SIZE = 256000  #128 # or 256  #The number of experiences for each replay
+MEMORY_SIZE = 1500000  # tang dan -->>>>  # The size of the batch for storing experiences
 SAVE_NETWORK = 5000  # After this number of episodes, the DQN model is saved for testing later.
-INITIAL_REPLAY_SIZE = 96000 * 2  # The number of experiences are stored in the memory batch before starting replaying
+INITIAL_REPLAY_SIZE = 128000 * 4  # The number of experiences are stored in the memory batch before starting replaying
 INPUT_SHAPE_1 = (21, 9, 7)  # The number of input values for the DQN model
 INPUT_SHAPE_2 = ((2 + 8 + 6) * 4,)
 ACTION_NUM = 6  # The number of actions output from the DQN model
@@ -86,7 +86,7 @@ for episode_i in range(0, N_EPISODE):
 
         # Getting the initial state
         minerEnv.reset()  # Initialize the game environment
-        state_map, state_users = minerEnv.get_state()  # Get the state after reseting.
+        state_map, state_users = minerEnv.get_state(initial_flag=True)  # Get the state after reseting.
         # This function (get_state()) is an example of creating a state for the DQN model
         episode_reward = 0  # The amount of rewards for the entire episode
         terminate = False  # The variable indicates that the episode ends
@@ -98,12 +98,13 @@ for episode_i in range(0, N_EPISODE):
         # Start an episode for training
         for step in range(0, maxStep):
             total_step += 1
+            #if random() < 0.8 \
             if random() < DQNAgent.epsilon \
                     and minerEnv.state.mapInfo.gold_amount(minerEnv.state.x, minerEnv.state.y) > 0:
-                if minerEnv.state.energy > 10:
-                    action = 5
-                else:
+                if random() < 0.3 or minerEnv.state.energy <= 5:
                     action = 4
+                else:
+                    action = 5
             else:
                 action = DQNAgent.act(state_map, state_users)  # Getting an action from the DQN model from the state (s)
             minerEnv.step(str(action))  # Performing the action in order to obtain the new state
@@ -141,18 +142,18 @@ for episode_i in range(0, N_EPISODE):
             #    pd.DataFrame(save_data).to_csv(f, encoding='utf-8', index=False, header=False)
 
             # Sample batch memory to train network
-            if memory.size >= INITIAL_REPLAY_SIZE and np.mod(total_step, 96000) == 0:
+            if memory.size >= INITIAL_REPLAY_SIZE and np.mod(total_step, 64000) == 0:
                 # If there are INITIAL_REPLAY_SIZE experiences in the memory batch
                 # then start replaying
-                for i in range(10):
-                    batch = memory.sample(BATCH_SIZE)  # Get a BATCH_SIZE experiences for replaying
-                    DQNAgent.replay(batch, BATCH_SIZE)  # Do relaying
-                    train = True  # Indicate the training starts
+                #for i in range(2):
+                batch = memory.sample(BATCH_SIZE)  # Get a BATCH_SIZE experiences for replaying
+                DQNAgent.replay(batch, BATCH_SIZE)  # Do relaying
+                train = True  # Indicate the training starts
 
             # check again ??????????????????????????????????????????????????????????
             # Iteration to save the network architecture and weights
             # if np.mod(episode_i + 1, SAVE_NETWORK) == 0 and train == True:
-            if np.mod(total_step, 1280000) == 0 and train == True:
+            if np.mod(total_step, 960000) == 0 and train == True:
                 DQNAgent.update_target_model()  # Replace the learning weights for target model with soft replacement
                 # Save the DQN model
                 now = datetime.datetime.now()  # Get the latest datetime
