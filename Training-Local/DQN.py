@@ -113,7 +113,7 @@ class DQN:
 
     def get_qs(self, state_map, state_users):
         # check shape again ??????????????????????????
-        return self.model.predict({"state_map": state_map.reshape(1, 21, 9, 7),
+        return self.model.predict({"state_map": state_map.reshape(1, 21, 9, 14),
                                    "state_users": state_users.reshape(1, (2 + 8 + 6) * 4)})
 
     def act(self, state_map, state_users):
@@ -162,8 +162,9 @@ class DQN:
         inputs_users = np.array(inputs_users)
         targets = np.array(targets)
         #loss = self.model.train_on_batch({"state_map": inputs_map, "state_users": inputs_users}, targets)
-        loss = self.model.fit({"state_map": inputs_map, "state_users": inputs_users}, targets, batch_size=1024,
+        history = self.model.fit({"state_map": inputs_map, "state_users": inputs_users}, targets, batch_size=1024,
                               shuffle=False)
+        return history
 
     def update_target_model(self):
         weights = self.model.get_weights()

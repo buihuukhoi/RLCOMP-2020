@@ -25,30 +25,47 @@ with open(filename, 'w') as f:
 
 # Parameters for training a DQN model
 # N_EPISODE = 10000  # The number of episodes for training
-N_EPISODE = 10000000  # The number of episodes for training
+N_EPISODE = 8000000  # The number of episodes for training
 # MAX_STEP = 1000   #The number of steps for each episode
-BATCH_SIZE = 256000  #128 # or 256  #The number of experiences for each replay
-MEMORY_SIZE = 1500000  # tang dan -->>>>  # The size of the batch for storing experiences
+BATCH_SIZE = 64000  #128 # or 256  #The number of experiences for each replay
+MEMORY_SIZE = 1000000  # tang dan -->>>>  # The size of the batch for storing experiences
 SAVE_NETWORK = 5000  # After this number of episodes, the DQN model is saved for testing later.
-INITIAL_REPLAY_SIZE = 128000 * 4  # The number of experiences are stored in the memory batch before starting replaying
-INPUT_SHAPE_1 = (21, 9, 7)  # The number of input values for the DQN model
+INITIAL_REPLAY_SIZE = 64000 * 2  # The number of experiences are stored in the memory batch before starting replaying
+INPUT_SHAPE_1 = (21, 9, 14)  # The number of input values for the DQN model
 INPUT_SHAPE_2 = ((2 + 8 + 6) * 4,)
 ACTION_NUM = 6  # The number of actions output from the DQN model
 MAP_MAX_X = 21 #Width of the Map
 MAP_MAX_Y = 9  #Height of the Map
 
 my_tensor = tf.Variable(0, dtype=tf.float32)  # initial value = 0
+my_tensor_int = tf.Variable(0, dtype=tf.int32)  # initial value = 0
 
 
 #tf.summary.scalar('time_append', my_tensor)
 #tf.summary.scalar('time_take_samples', my_tensor)
 #tf.summary.scalar('time_train', my_tensor)
-#tf.summary.scalar('episode avg_loss', my_tensor)
+tf.summary.scalar('episode avg_loss1', my_tensor)
+tf.summary.scalar('episode avg_loss2', my_tensor)
 tf.summary.scalar('episode reward', my_tensor)
 tf.summary.scalar('episode avg_reward', my_tensor)
 tf.summary.scalar('episode goal', my_tensor)
-tf.summary.scalar('episode total_steps', my_tensor)
+tf.summary.scalar('episode total_steps', my_tensor_int)
 tf.summary.scalar('episode epsilon', my_tensor)
+tf.summary.scalar('episode num_act left', my_tensor_int)
+tf.summary.scalar('episode num_act right', my_tensor_int)
+tf.summary.scalar('episode num_act up', my_tensor_int)
+tf.summary.scalar('episode num_act down', my_tensor_int)
+tf.summary.scalar('episode num_act relax', my_tensor_int)
+tf.summary.scalar('episode num_act mine', my_tensor_int)
+tf.summary.scalar('episode num of wrong relax', my_tensor_int)
+tf.summary.scalar('episode num of wrong mining', my_tensor_int)
+tf.summary.scalar('episode terminate playing', my_tensor_int)
+tf.summary.scalar('episode terminate out of map', my_tensor_int)
+tf.summary.scalar('episode terminate out of energy', my_tensor_int)
+tf.summary.scalar('episode terminate others', my_tensor_int)
+tf.summary.scalar('episode terminate out of golds', my_tensor_int)
+tf.summary.scalar('episode terminate end step', my_tensor_int)
+tf.summary.scalar('total step at episodes', my_tensor_int)
 merged_summary_op = tf.summary.merge_all()
 
 current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -62,6 +79,7 @@ summary_writer = tf.summary.FileWriter(log_dir)
 DQNAgent = DQN(INPUT_SHAPE_1, INPUT_SHAPE_2, ACTION_NUM, epsilon_decay=0.99999, epsilon_min=0.1)
 DQNAgent.update_target_model()
 memory = Memory(MEMORY_SIZE)
+current_memory = Memory(32000)
 
 # Initialize environment
 minerEnv = MinerEnv(HOST, PORT) #Creating a communication environment between the DQN model and the game environment (GAME_SOCKET_DUMMY.py)
@@ -72,6 +90,8 @@ train = False #The variable is used to indicate that the replay starts, and the 
 #the main part of the deep-q learning agorithm
 
 total_step = 0
+loss1 = 0
+loss2 = 0
 
 for episode_i in range(0, N_EPISODE):
     try:
@@ -94,21 +114,25 @@ for episode_i in range(0, N_EPISODE):
         score = 0  # Khoi added
         # episode_loss = 0
         step = 0
+        num_of_acts = [0, 0, 0, 0, 0, 0]
+        terminate_list = [0, 0, 0, 0, 0, 0]
+        num_of_wrong_relax = 0
+        num_of_wrong_mining = 0
 
         # Start an episode for training
         for step in range(0, maxStep):
             total_step += 1
             #if random() < 0.8 \
-            if random() < DQNAgent.epsilon \
-                    and minerEnv.state.mapInfo.gold_amount(minerEnv.state.x, minerEnv.state.y) > 0:
-                if random() < 0.3 or minerEnv.state.energy <= 5:
-                    action = 4
-                else:
-                    action = 5
-            else:
-                action = DQNAgent.act(state_map, state_users)  # Getting an action from the DQN model from the state (s)
+            action = DQNAgent.act(state_map, state_users)  # Getting an action from the DQN model from the state (s)
+            # stay at gold
+            if minerEnv.state.mapInfo.gold_amount(minerEnv.state.x, minerEnv.state.y) > 0:
+                if random() < DQNAgent.epsilon:
+                    if minerEnv.state.energy <= 5:
+                        action = 4
+                    else:
+                        action = 5
             minerEnv.step(str(action))  # Performing the action in order to obtain the new state
-            reward = minerEnv.get_reward(DQNAgent.epsilon)  # Getting a reward
+            reward, num_of_wrong_relax, num_of_wrong_mining = minerEnv.get_reward(num_of_wrong_relax, num_of_wrong_mining)  # Getting a reward
             new_state_map, new_state_users = minerEnv.get_state()  # Getting a new state
             terminate = minerEnv.check_terminate()  # Checking the end status of the episode
             
@@ -118,8 +142,11 @@ for episode_i in range(0, N_EPISODE):
 
             # Add this transition to the memory batch
             #tmp_t1 = time.time()
+            current_memory.append(state_map, state_users, action, reward, new_state_map, new_state_users, terminate)
             memory.append(state_map, state_users, action, reward, new_state_map, new_state_users, terminate)
             #t1 = time.time() - tmp_t1
+
+            num_of_acts[action] += 1
 
             episode_reward += reward  # Plus the reward to the total reward of the episode
             state_map = new_state_map  # Assign the next state for the next step.
@@ -142,18 +169,24 @@ for episode_i in range(0, N_EPISODE):
             #    pd.DataFrame(save_data).to_csv(f, encoding='utf-8', index=False, header=False)
 
             # Sample batch memory to train network
-            if memory.size >= INITIAL_REPLAY_SIZE and np.mod(total_step, 64000) == 0:
+            if memory.size >= INITIAL_REPLAY_SIZE and np.mod(total_step, 32000) == 0:
                 # If there are INITIAL_REPLAY_SIZE experiences in the memory batch
                 # then start replaying
                 #for i in range(2):
-                batch = memory.sample(BATCH_SIZE)  # Get a BATCH_SIZE experiences for replaying
-                DQNAgent.replay(batch, BATCH_SIZE)  # Do relaying
+                batch1 = current_memory.sample(32000)
+                hist1 = DQNAgent.replay(batch1, 32000)  # Do relaying
+                loss1 = hist1.history['loss'][0]
+                #loss1 = sum(loss1) / float(len(loss1))
+                batch2 = memory.sample(BATCH_SIZE)  # Get a BATCH_SIZE experiences for replaying
+                hist2 = DQNAgent.replay(batch2, BATCH_SIZE)  # Do relaying
+                loss2 = hist2.history['loss'][0]
+                #loss2 = sum(loss2) / float(len(loss2))
                 train = True  # Indicate the training starts
 
             # check again ??????????????????????????????????????????????????????????
             # Iteration to save the network architecture and weights
             # if np.mod(episode_i + 1, SAVE_NETWORK) == 0 and train == True:
-            if np.mod(total_step, 960000) == 0 and train == True:
+            if np.mod(total_step, 640000) == 0 and train == True:
                 DQNAgent.update_target_model()  # Replace the learning weights for target model with soft replacement
                 # Save the DQN model
                 now = datetime.datetime.now()  # Get the latest datetime
@@ -164,6 +197,8 @@ for episode_i in range(0, N_EPISODE):
                 # If the episode ends, then go to the next episode
                 break
 
+        terminate_list[minerEnv.state.status] = 1
+
         summary = tf.Summary()
         #summary.value.add(tag='episode avg_loss', simple_value=episode_loss/(step+1))
         summary.value.add(tag='episode reward', simple_value=episode_reward)
@@ -171,6 +206,24 @@ for episode_i in range(0, N_EPISODE):
         summary.value.add(tag='episode goal', simple_value=score)
         summary.value.add(tag='episode total steps', simple_value=step + 1)
         summary.value.add(tag='episode epsilon', simple_value=DQNAgent.epsilon)
+        summary.value.add(tag='episode num_act left', simple_value=num_of_acts[0])
+        summary.value.add(tag='episode num_act right', simple_value=num_of_acts[1])
+        summary.value.add(tag='episode num_act up', simple_value=num_of_acts[2])
+        summary.value.add(tag='episode num_act down', simple_value=num_of_acts[3])
+        summary.value.add(tag='episode num_act relax', simple_value=num_of_acts[4])
+        summary.value.add(tag='episode num_act mine', simple_value=num_of_acts[5])
+        summary.value.add(tag='episode num of wrong relax', simple_value=num_of_wrong_relax)
+        summary.value.add(tag='episode num of wrong mining', simple_value=num_of_wrong_mining)
+        summary.value.add(tag='episode terminate playing', simple_value=terminate_list[0])
+        summary.value.add(tag='episode terminate out of map', simple_value=terminate_list[1])
+        summary.value.add(tag='episode terminate out of energy', simple_value=terminate_list[2])
+        summary.value.add(tag='episode terminate others', simple_value=terminate_list[3])
+        summary.value.add(tag='episode terminate out of golds', simple_value=terminate_list[4])
+        summary.value.add(tag='episode terminate end step', simple_value=terminate_list[5])
+        summary.value.add(tag='total step at episodes', simple_value=total_step)
+        summary.value.add(tag='episode avg_loss1', simple_value=loss1)
+        summary.value.add(tag='episode avg_loss2', simple_value=loss2)
+
         summary_writer.add_summary(summary, episode_i)
         summary_writer.flush()
 

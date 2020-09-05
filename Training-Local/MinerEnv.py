@@ -53,7 +53,7 @@ class MinerEnv:
         self.energy_pre = self.state.energy
 
         # depth = 3  # goal, min_energy, max_energy
-        depth = 3 + 4  # goal, min_energy, max_energy, 4 player position
+        depth = 14  # goal, min_energy, max_energy, 4 player position
         goal_depth = 0
         min_energy_depth = 1
         max_energy_depth = 2
@@ -61,6 +61,13 @@ class MinerEnv:
         bot1_depth = 4
         bot2_depth = 5
         bot3_depth = 6
+        goal_pos = 7
+        tree_pos = 8
+        trap_pos = 9
+        swamp_pos_5 = 10
+        swamp_pos_20 = 11
+        swamp_pos_40 = 12
+        swamp_pos_100 = 13
 
         # len_player_infor = 6 * 4
         len_player_infor = 2 + 8 + 6
@@ -81,27 +88,39 @@ class MinerEnv:
         view_1 = np.zeros([self.state.mapInfo.max_x + 1, self.state.mapInfo.max_y + 1, depth], dtype=float)
         for i in range(self.state.mapInfo.max_x + 1):
             for j in range(self.state.mapInfo.max_y + 1):
-                view_1[i, j, min_energy_depth] = 1 / max_energy
-                view_1[i, j, max_energy_depth] = 1 / max_energy
+                view_1[i, j, min_energy_depth] = -1 / max_energy
+                view_1[i, j, max_energy_depth] = -1 / max_energy
 
                 goal = self.state.mapInfo.gold_amount(i, j)
                 if goal > 0:
-                    view_1[i, j, min_energy_depth] = 4 / max_energy
-                    view_1[i, j, max_energy_depth] = 4 / max_energy
+                    view_1[i, j, goal_pos] = 1
+                    view_1[i, j, min_energy_depth] = -4 / max_energy
+                    view_1[i, j, max_energy_depth] = -4 / max_energy
                     view_1[i, j, goal_depth] = goal / max_goal
 
         for obstacle in self.state.mapInfo.obstacles:
             i = obstacle["posx"]
             j = obstacle["posy"]
             if obstacle["type"] == TreeID:  # Tree
-                view_1[i, j, min_energy_depth] = 5 / max_energy  # 5~20
-                view_1[i, j, max_energy_depth] = 20 / max_energy  # 5~20
+                view_1[i, j, tree_pos] = 1
+                view_1[i, j, min_energy_depth] = -5 / max_energy  # -5 ~ -20
+                view_1[i, j, max_energy_depth] = -20 / max_energy  # -5 ~ -20
             elif obstacle["type"] == TrapID:  # Trap
-                view_1[i, j, min_energy_depth] = -obstacle["value"] / max_energy
-                view_1[i, j, max_energy_depth] = -obstacle["value"] / max_energy
+                if obstacle["value"] != 0:
+                    view_1[i, j, trap_pos] = 1
+                view_1[i, j, min_energy_depth] = obstacle["value"] / max_energy
+                view_1[i, j, max_energy_depth] = obstacle["value"] / max_energy
             elif obstacle["type"] == SwampID:  # Swamp
-                view_1[i, j, min_energy_depth] = -obstacle["value"] / max_energy  # 5, 20, 40, 100
-                view_1[i, j, max_energy_depth] = -obstacle["value"] / max_energy  # 5, 20, 40, 100
+                view_1[i, j, min_energy_depth] = obstacle["value"] / max_energy  # -5, -20, -40, -100
+                view_1[i, j, max_energy_depth] = obstacle["value"] / max_energy  # -5, -20, -40, -100
+                if obstacle["value"] == -5:
+                    view_1[i, j, swamp_pos_5] = 1
+                elif obstacle["value"] == -20:
+                    view_1[i, j, swamp_pos_20] = 1
+                elif obstacle["value"] == -40:
+                    view_1[i, j, swamp_pos_40] = 1
+                elif obstacle["value"] == -100:
+                    view_1[i, j, swamp_pos_100] = 1
 
         """
         for goal in self.state.mapInfo.golds:
@@ -155,7 +174,7 @@ class MinerEnv:
 
         return DQNState_map, DQNState_users
 
-    def get_reward(self, epsilon):
+    def get_reward(self, num_of_wrong_relax, num_of_wrong_mining):
         # return -0.01 ~ 0.01
         # reward must target to mine goal
 
@@ -163,7 +182,7 @@ class MinerEnv:
         reward_died = -50  # ~ double max reward
         # reward_died = -25  # let a try
 
-        reward_enter_goal = max_reward / 20
+        reward_enter_goal = max_reward / 20  # 5
 
         # Calculate reward
         reward = 0  # moving, because agent will die at the max step
@@ -180,12 +199,14 @@ class MinerEnv:
                 if self.state.mapInfo.gold_amount(self.state.x, self.state.y) > 0:
                     reward = reward_enter_goal / 2500
             # mining but cannot get gold
-            #elif (int(self.state.lastAction) == 5) and (score_action == 0):
+            elif (int(self.state.lastAction) == 5) and (score_action == 0):
             #    reward = reward_died / 10 / max_reward
+                num_of_wrong_mining += 1
             # relax when energy > 40 or cannot get more energy
-            #elif int(self.state.lastAction) == 4:
-            #    if self.energy_pre > 40 or energy_action == 0:
-            #        reward = reward_died / 50 / max_reward
+            elif int(self.state.lastAction) == 4:
+                if self.energy_pre > 40 or energy_action == 0:
+            #        reward = reward_died / 10 / max_reward
+                    num_of_wrong_relax += 1
 
             # at gold but move to ground
             # if (int(self.state.lastAction) < 4) and (self.state.mapInfo.gold_amount(self.x_pre, self.y_pre) > 0) \
@@ -206,13 +227,17 @@ class MinerEnv:
 
         #elif self.state.status == State.STATUS_ELIMINATED_OUT_OF_ENERGY or self.state.status == State.STATUS_STOP_EMPTY_GOLD \
         #        or self.state.status == State.STATUS_STOP_END_STEP:
+
         if self.state.status != State.STATUS_PLAYING:
             if self.state.score == 0:
                 reward = reward_died / max_reward  # -1
 
+        if self.state.status == State.STATUS_ELIMINATED_WENT_OUT_MAP or self.state.status == State.STATUS_ELIMINATED_OUT_OF_ENERGY:
+            reward = reward_died / max_reward  # -1
+
         # print ("reward",reward)
         #return reward / max_reward / self.state.mapInfo.maxStep  # 100 steps
-        return reward
+        return reward, num_of_wrong_relax, num_of_wrong_mining
 
     def check_terminate(self):
         # Checking the status of the game
