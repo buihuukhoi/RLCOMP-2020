@@ -164,6 +164,7 @@ class GameSocket:
         self.stepCount = 0
 
     def reset_map(self, id):  # load map info
+        """
         self.mapId = id
         self.map = json.loads(self.maps[self.mapId])
         self.userMatch = self.map_info(self.map)
@@ -176,11 +177,11 @@ class GameSocket:
                     self.energyOnMap[x][y] = -4
                 else:  # obstacles
                     self.energyOnMap[x][y] = ObstacleInfo.types[self.map[x][y]]
-
         """
         self.mapId = id
 
         # Generate Maps
+        """
         gold_value = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500,
                       550, 600, 650, 700, 750, 800, 850, 900, 950, 1000,
                       1050, 1100, 1150, 1200, 1250, 1300, 1350, 1400, 1450, 1500,
@@ -190,6 +191,14 @@ class GameSocket:
                      0.0275, 0.0275, 0.0275, 0.0275, 0.015, 0.015, 0.015, 0.015, 0.015, 0.015,
                      0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005,
                      0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001]
+        """
+        gold_value = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500,
+                      550, 600, 650, 700, 750, 800, 850, 900, 950, 1000,
+                      1050, 1100, 1150, 1200, 1250]
+
+        gold_prob = [0.10, 0.10, 0.0725, 0.0725, 0.0725, 0.0725, 0.051, 0.051, 0.051, 0.051,
+                     0.0375, 0.0375, 0.0375, 0.0375, 0.025, 0.025, 0.025, 0.025, 0.025, 0.025,
+                     0.0112, 0.0112, 0.0112, 0.0112, 0.0112]
 
         tmp_map = json.loads(self.maps[self.mapId])
 
@@ -213,7 +222,7 @@ class GameSocket:
                     self.energyOnMap[x][y] = -4
                 else:  # obstacles
                     self.energyOnMap[x][y] = ObstacleInfo.types[self.map[x][y]]
-        """
+
 
     def connect(self):  # simulate player's connect request
         print("Connected to server.")
@@ -229,7 +238,6 @@ class GameSocket:
         userMatch.gameinfo.height = len(map)
         userMatch.gameinfo.width = len(map[0])
         i = 0
-        max_gold_num = 10000
         while i < len(map):
             j = 0
             while j < len(map[i]):
@@ -237,8 +245,7 @@ class GameSocket:
                     g = GoldInfo()
                     g.posx = j
                     g.posy = i
-                    g.amount = (randrange(min(25, max(int(max_gold_num / 50), 1))) + 1) * 50
-                    max_gold_num -= g.amount
+                    g.amount = map[i][j]
                     userMatch.gameinfo.golds.append(g)
                 else:  # obstacles
                     o = ObstacleInfo()
