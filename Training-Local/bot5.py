@@ -47,14 +47,13 @@ class Bot5:
                         count_players += 1
                 elif initial_flag:  # 0 step, initial state
                     count_players += 1
-        #if are_we_here:
-        if self.state.x == x and self.state.y == y:
+        if are_we_here:
             return gold_on_ground / count_players
         else:
             return gold_on_ground / (count_players + 1)  # +1 because assuming that we will come here
 
     def findLargestGold(self):
-        my_bot_x, my_bot_y = self.state.x, self.state.y
+        my_bot_x, my_bot_y = self.info.posx, self.info.posy
         largest_gold_x = -1
         largest_gold_y = -1
 
@@ -79,7 +78,7 @@ class Bot5:
         return largest_gold_x, largest_gold_y
 
     def findLargestGoldInSmallMap(self, des_x, des_y):
-        x, y = self.state.x, self.state.y
+        x, y = self.info.posx, self.info.posy
         largest_gold_x = None
         largest_gold_y = None
         next_step_x = 0
@@ -104,22 +103,22 @@ class Bot5:
                             largest_gold_y = y
                             max_gold = gold_amount
                         elif gold_amount == max_gold:
-                            prev_distance = (largest_gold_x - self.state.x) * (largest_gold_x - self.state.x) + \
-                                            (largest_gold_y - self.state.y) * (largest_gold_y - self.state.y)
-                            new_distance = (x - self.state.x) * (x - self.state.x) + (y - self.state.y) * (
-                                        y - self.state.y)
+                            prev_distance = (largest_gold_x - self.info.posx) * (largest_gold_x - self.info.posx) + \
+                                            (largest_gold_y - self.info.posy) * (largest_gold_y - self.info.posy)
+                            new_distance = (x - self.info.posx) * (x - self.info.posx) + (y - self.info.posy) * (
+                                        y - self.info.posy)
                             if new_distance < prev_distance:
                                 largest_gold_x = x
                                 largest_gold_y = y
                                 max_gold = gold_amount
                 y += next_step_y
-            y = self.state.y
+            y = self.info.posy
             x += next_step_x
 
         return largest_gold_x, largest_gold_y
 
     def getActionBaseOnEnergy(self, action_option_1, action_option_2):
-        my_bot_x, my_bot_y = self.state.x, self.state.y
+        my_bot_x, my_bot_y = self.info.posx, self.info.posy
         n_action = action_option_1
         require_energy = 100
 
@@ -169,7 +168,7 @@ class Bot5:
             n_action = action_option_2
             require_energy = energy_2
 
-        if self.state.energy <= require_energy:
+        if self.info.energy <= require_energy:
             n_action = self.ACTION_FREE
 
         # print("require_energy = {0}".format(require_energy))
@@ -180,7 +179,7 @@ class Bot5:
     def goToTarget(self, des_x, des_y):
         n_action = self.ACTION_FREE
         require_energy = 100
-        my_bot_x, my_bot_y = self.state.x, self.state.y
+        my_bot_x, my_bot_y = self.info.posx, self.info.posy
         next_my_bot_x = my_bot_x
         next_my_bot_y = my_bot_y
         if my_bot_x == des_x:
@@ -226,18 +225,19 @@ class Bot5:
                         require_energy = 10
                 elif obstacle["type"] == 3:  # Swamp
                     require_energy = -obstacle["value"]
-        if self.state.energy <= require_energy:
+        if self.info.energy <= require_energy:
             n_action = self.ACTION_FREE
 
         return n_action
 
     def next_action(self, initial_flag=False):
-        my_bot_x, my_bot_y = self.state.x, self.state.y
+        #my_bot_x, my_bot_y = self.state.x, self.state.y
+        my_bot_x, my_bot_y = self.info.posx, self.info.posy
         n_action = self.ACTION_FREE
         gold_on_ground = self.myGetGoldAmount(my_bot_x, my_bot_y, self.initial_flag, are_we_here=True)
         if self.initial_flag:
             self.initial_flag = False
-        energy = self.state.energy
+        energy = self.info.energy
 
         if gold_on_ground > 0:
             if energy <= 5:
