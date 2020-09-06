@@ -45,7 +45,7 @@ class MinerEnv:
             traceback.print_exc()
 
     # Functions are customized by client
-    def get_state(self, initial_flag=False):
+    def get_state(self, remain_steps, initial_flag=False):
         # update pre position, score, energy
         #self.x_pre = self.state.x
         #self.y_pre = self.state.y
@@ -53,7 +53,7 @@ class MinerEnv:
         self.energy_pre = self.state.energy
 
         # depth = 3  # goal, min_energy, max_energy
-        depth = 14  # goal, min_energy, max_energy, 4 player position
+        depth = 15  # goal, min_energy, max_energy, 4 player position
         goal_depth = 0
         min_energy_depth = 1
         max_energy_depth = 2
@@ -68,12 +68,13 @@ class MinerEnv:
         swamp_pos_20 = 11
         swamp_pos_40 = 12
         swamp_pos_100 = 13
+        ground_position = 14
 
         # len_player_infor = 6 * 4
         len_player_infor = 2 + 8 + 6
 
         # max_goal = 67 * 50 * 4  # assume 67 steps for mining and 33 steps for relaxing
-        max_goal = 2000
+        max_goal = 1250
         max_energy = 100
 
         # max_x = self.state.mapInfo.max_x
@@ -88,11 +89,14 @@ class MinerEnv:
         view_1 = np.zeros([self.state.mapInfo.max_x + 1, self.state.mapInfo.max_y + 1, depth], dtype=float)
         for i in range(self.state.mapInfo.max_x + 1):
             for j in range(self.state.mapInfo.max_y + 1):
+                # ground
                 view_1[i, j, min_energy_depth] = -1 / max_energy
                 view_1[i, j, max_energy_depth] = -1 / max_energy
+                view_1[i, j, ground_position] = 1
 
                 goal = self.state.mapInfo.gold_amount(i, j)
                 if goal > 0:
+                    view_1[i, j, ground_position] = 0
                     view_1[i, j, goal_pos] = 1
                     view_1[i, j, min_energy_depth] = -4 / max_energy
                     view_1[i, j, max_energy_depth] = -4 / max_energy
@@ -102,15 +106,18 @@ class MinerEnv:
             i = obstacle["posx"]
             j = obstacle["posy"]
             if obstacle["type"] == TreeID:  # Tree
+                view_1[i, j, ground_position] = 0
                 view_1[i, j, tree_pos] = 1
                 view_1[i, j, min_energy_depth] = -5 / max_energy  # -5 ~ -20
                 view_1[i, j, max_energy_depth] = -20 / max_energy  # -5 ~ -20
             elif obstacle["type"] == TrapID:  # Trap
                 if obstacle["value"] != 0:
+                    view_1[i, j, ground_position] = 0
                     view_1[i, j, trap_pos] = 1
                 view_1[i, j, min_energy_depth] = obstacle["value"] / max_energy
                 view_1[i, j, max_energy_depth] = obstacle["value"] / max_energy
             elif obstacle["type"] == SwampID:  # Swamp
+                view_1[i, j, ground_position] = 0
                 view_1[i, j, min_energy_depth] = obstacle["value"] / max_energy  # -5, -20, -40, -100
                 view_1[i, j, max_energy_depth] = obstacle["value"] / max_energy  # -5, -20, -40, -100
                 if obstacle["value"] == -5:
@@ -132,7 +139,7 @@ class MinerEnv:
         """
 
         # Add player's information
-        view_2 = np.zeros([len_player_infor * 4], dtype=float)
+        view_2 = np.zeros([len_player_infor * 4 + 1], dtype=float)  # +1 remaining steps
 
         index_player = 0
 
@@ -167,6 +174,7 @@ class MinerEnv:
                         view_2[index_player * len_player_infor + 1] = 0 / max_score
                         view_2[index_player * len_player_infor + 2 + max_last_action] = 1  # one hot
                         view_2[index_player * len_player_infor + 2 + max_last_action + 1 + self.state.STATUS_PLAYING] = 1
+        view_2[-1] = remain_steps / 100
 
         # Convert the DQNState from list to array for training
         DQNState_map = np.array(view_1)
@@ -194,12 +202,12 @@ class MinerEnv:
             reward = score_action / 2500  # max ~2500 / episode
         else:
             # moving
-            if int(self.state.lastAction) < 4:
-                # enter gold
-                if self.state.mapInfo.gold_amount(self.state.x, self.state.y) > 0:
-                    reward = reward_enter_goal / 2500
+            #if int(self.state.lastAction) < 4:
+            #    # enter gold
+            #    if self.state.mapInfo.gold_amount(self.state.x, self.state.y) > 0:
+            #        reward = reward_enter_goal / 2500
             # mining but cannot get gold
-            elif (int(self.state.lastAction) == 5) and (score_action == 0):
+            if (int(self.state.lastAction) == 5) and (score_action == 0):
             #    reward = reward_died / 10 / max_reward
                 num_of_wrong_mining += 1
             # relax when energy > 40 or cannot get more energy

@@ -31,8 +31,8 @@ BATCH_SIZE = 64000  #128 # or 256  #The number of experiences for each replay
 MEMORY_SIZE = 1000000  # tang dan -->>>>  # The size of the batch for storing experiences
 SAVE_NETWORK = 5000  # After this number of episodes, the DQN model is saved for testing later.
 INITIAL_REPLAY_SIZE = 64000 * 2  # The number of experiences are stored in the memory batch before starting replaying
-INPUT_SHAPE_1 = (21, 9, 14)  # The number of input values for the DQN model
-INPUT_SHAPE_2 = ((2 + 8 + 6) * 4,)
+INPUT_SHAPE_1 = (21, 9, 15)  # The number of input values for the DQN model
+INPUT_SHAPE_2 = ((2 + 8 + 6) * 4 + 1,)
 ACTION_NUM = 6  # The number of actions output from the DQN model
 MAP_MAX_X = 21 #Width of the Map
 MAP_MAX_Y = 9  #Height of the Map
@@ -96,7 +96,7 @@ loss2 = 0
 for episode_i in range(0, N_EPISODE):
     try:
         # Choosing a map in the list
-        mapID = np.random.randint(1, 6)  # Choosing a map ID from 5 maps in Maps folder randomly
+        mapID = np.random.randint(1, 13)  # Choosing a map ID from 12 maps in Maps folder randomly
         posID_x = np.random.randint(MAP_MAX_X)  # Choosing a initial position of the DQN agent on X-axes randomly
         posID_y = np.random.randint(MAP_MAX_Y)  # Choosing a initial position of the DQN agent on Y-axes randomly
         #Creating a request for initializing a map, initial position, the initial energy, and the maximum number of steps of the DQN agent
@@ -106,7 +106,7 @@ for episode_i in range(0, N_EPISODE):
 
         # Getting the initial state
         minerEnv.reset()  # Initialize the game environment
-        state_map, state_users = minerEnv.get_state(initial_flag=True)  # Get the state after reseting.
+        state_map, state_users = minerEnv.get_state(100, initial_flag=True)  # Get the state after reseting.
         # This function (get_state()) is an example of creating a state for the DQN model
         episode_reward = 0  # The amount of rewards for the entire episode
         terminate = False  # The variable indicates that the episode ends
@@ -133,7 +133,7 @@ for episode_i in range(0, N_EPISODE):
                         action = 5
             minerEnv.step(str(action))  # Performing the action in order to obtain the new state
             reward, num_of_wrong_relax, num_of_wrong_mining = minerEnv.get_reward(num_of_wrong_relax, num_of_wrong_mining)  # Getting a reward
-            new_state_map, new_state_users = minerEnv.get_state()  # Getting a new state
+            new_state_map, new_state_users = minerEnv.get_state(100 - step - 1)  # Getting a new state
             terminate = minerEnv.check_terminate()  # Checking the end status of the episode
             
             #t1=0

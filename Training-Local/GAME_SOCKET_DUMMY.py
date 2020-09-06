@@ -229,6 +229,7 @@ class GameSocket:
         userMatch.gameinfo.height = len(map)
         userMatch.gameinfo.width = len(map[0])
         i = 0
+        max_gold_num = 10000
         while i < len(map):
             j = 0
             while j < len(map[i]):
@@ -236,7 +237,8 @@ class GameSocket:
                     g = GoldInfo()
                     g.posx = j
                     g.posy = i
-                    g.amount = map[i][j]
+                    g.amount = (randrange(min(25, max(int(max_gold_num / 50), 1))) + 1) * 50
+                    max_gold_num -= g.amount
                     userMatch.gameinfo.golds.append(g)
                 else:  # obstacles
                     o = ObstacleInfo()
@@ -247,6 +249,7 @@ class GameSocket:
                     userMatch.gameinfo.obstacles.append(o)
                 j += 1
             i += 1
+        # print("max_gold_num=",max_gold_num)
         return userMatch
 
     def receive(self):  # send data to player (simulate player's receive request)

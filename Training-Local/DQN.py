@@ -50,9 +50,10 @@ class DQN:
 
     def create_model(self):
         x1 = Input(shape=self.input_shape_1, name="state_map")
-        conv = Conv2D(32, (8, 8), strides=(4, 4), padding="same", activation="relu")(x1)
-        conv = Conv2D(64, (4, 4), strides=(2, 2), padding="same", activation="relu")(conv)
-        conv = Conv2D(64, (3, 3), strides=(1, 1), padding="same", activation="relu")(conv)
+        #conv = Conv2D(32, (8, 8), strides=(4, 4), padding="same", activation="relu")(x1)
+        conv = Conv2D(64, (5, 5), strides=(2, 2), padding="same", activation="relu")(x1)
+        conv = Conv2D(64, (3, 3), strides=(2, 2), padding="same", activation="relu")(conv)
+        conv = Conv2D(64, (3, 3), strides=(2, 2), padding="same", activation="relu")(conv)
         flatten_1 = Flatten()(conv)
 
         x2 = Input(shape=self.input_shape_2, name="state_users")
@@ -113,8 +114,8 @@ class DQN:
 
     def get_qs(self, state_map, state_users):
         # check shape again ??????????????????????????
-        return self.model.predict({"state_map": state_map.reshape(1, 21, 9, 14),
-                                   "state_users": state_users.reshape(1, (2 + 8 + 6) * 4)})
+        return self.model.predict({"state_map": state_map.reshape(1, 21, 9, 15),
+                                   "state_users": state_users.reshape(1, (2 + 8 + 6) * 4 + 1)})
 
     def act(self, state_map, state_users):
         # Get the index of the maximum Q values
