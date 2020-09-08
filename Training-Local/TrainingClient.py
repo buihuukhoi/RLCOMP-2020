@@ -96,7 +96,9 @@ loss2 = 0
 for episode_i in range(0, N_EPISODE):
     try:
         # Choosing a map in the list
-        mapID = np.random.randint(1, 13)  # Choosing a map ID from 12 maps in Maps folder randomly
+        #mapID = np.random.randint(1, 13)  # Choosing a map ID from 12 maps in Maps folder randomly
+        mapID = 1  # Choosing a map ID from 12 maps in Maps folder randomly
+
         posID_x = np.random.randint(MAP_MAX_X)  # Choosing a initial position of the DQN agent on X-axes randomly
         posID_y = np.random.randint(MAP_MAX_Y)  # Choosing a initial position of the DQN agent on Y-axes randomly
         #Creating a request for initializing a map, initial position, the initial energy, and the maximum number of steps of the DQN agent
@@ -191,7 +193,7 @@ for episode_i in range(0, N_EPISODE):
                 # Save the DQN model
                 now = datetime.datetime.now()  # Get the latest datetime
                 DQNAgent.save_model("TrainedModels/",
-                                    "DQNmodel_" + now.strftime("%Y%m%d-%H%M") + "_ep" + str(episode_i + 1))
+                                    "DQNmodel_" + now.strftime("%Y%m%d-%H%M") + "_ep" + str(episode_i + 1) + f'_map{mapID}')
 
             if terminate:
                 # If the episode ends, then go to the next episode

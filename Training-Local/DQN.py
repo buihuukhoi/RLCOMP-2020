@@ -51,7 +51,7 @@ class DQN:
     def create_model(self):
         x1 = Input(shape=self.input_shape_1, name="state_map")
         #conv = Conv2D(32, (8, 8), strides=(4, 4), padding="same", activation="relu")(x1)
-        conv = Conv2D(64, (5, 5), strides=(2, 2), padding="same", activation="relu")(x1)
+        conv = Conv2D(128, (5, 5), strides=(2, 2), padding="same", activation="relu")(x1)
         conv = Conv2D(64, (3, 3), strides=(2, 2), padding="same", activation="relu")(conv)
         conv = Conv2D(64, (3, 3), strides=(2, 2), padding="same", activation="relu")(conv)
         flatten_1 = Flatten()(conv)

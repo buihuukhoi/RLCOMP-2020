@@ -8,6 +8,7 @@ from bot2 import Bot2
 from bot3 import Bot3
 from bot4 import Bot4
 from bot5 import Bot5
+from bot6 import Bot6
 from random import randrange
 import copy
 import numpy as np
@@ -124,13 +125,29 @@ class GameSocket:
 
     def init_bots(self):
         #self.bots = [Bot1(2), Bot2(3), Bot3(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
-        tmp_random = randrange(3)
-        if tmp_random == 0:
-            self.bots = [Bot5(2), Bot1(3), Bot2(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
+        tmp_random = randrange(20)
+        if tmp_random == 0 or tmp_random > 15:
+            self.bots = [Bot5(2), Bot6(3), Bot2(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
+        elif tmp_random > 9:
+            self.bots = [Bot2(2), Bot5(3), Bot6(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
         elif tmp_random == 1:
-            self.bots = [Bot3(2), Bot2(3), Bot5(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
+            self.bots = [Bot1(2), Bot2(3), Bot6(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
+        elif tmp_random == 2:
+            self.bots = [Bot5(2), Bot1(3), Bot2(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
+        elif tmp_random == 3:
+            self.bots = [Bot6(2), Bot5(3), Bot1(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
+        elif tmp_random == 4:
+            self.bots = [Bot3(2), Bot6(3), Bot2(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
+        elif tmp_random == 5:
+            self.bots = [Bot2(2), Bot3(3), Bot5(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
+        elif tmp_random == 6:
+            self.bots = [Bot5(2), Bot6(3), Bot3(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
+        elif tmp_random == 7:
+            self.bots = [Bot6(2), Bot2(3), Bot4(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
+        elif tmp_random == 8:
+            self.bots = [Bot4(2), Bot2(3), Bot5(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
         else:
-            self.bots = [Bot2(2), Bot5(3), Bot4(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
+            self.bots = [Bot6(2), Bot5(3), Bot4(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
         for (bot) in self.bots:  # at the beginning, all bots will have same position, energy as player
             bot.info.posx = self.user.posx
             bot.info.posy = self.user.posy
