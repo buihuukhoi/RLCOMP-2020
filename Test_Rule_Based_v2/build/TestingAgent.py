@@ -20,6 +20,7 @@ class MyBot:
 
         self.is_moving_right = True  # default: go to right side
         self.steps = 0
+        self.pre_action = 0
 
     def start(self):  # connect to server
         self.socket.connect()
@@ -374,12 +375,12 @@ class MyBot:
         if gold_on_ground > 0:
             if energy <= 5:
                 n_action = self.ACTION_FREE
-            elif energy > 37.5:
+            elif energy >= (gold_on_ground/50)*5:
                 n_action = self.ACTION_CRAFT
-            elif energy > (gold_on_ground/50)*5:
-                n_action = self.ACTION_CRAFT
-            else:
+            elif self.pre_action == self.ACTION_FREE and energy < 38:
                 n_action = self.ACTION_FREE
+            else:
+                n_action = self.ACTION_CRAFT
         else:
             leftOrRight = 2
             if self.steps < 30:
@@ -397,6 +398,7 @@ class MyBot:
             n_action = self.goToTarget(target_x, target_y)
 
         self.steps += 1
+        self.pre_action = n_action
         return n_action
 
 
