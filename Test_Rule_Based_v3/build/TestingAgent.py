@@ -283,13 +283,13 @@ class MyBot:
         energy_option_1 = 100000
         energy_option_2 = 100000
 
-        if y != des_y:
+        if x != des_x:
             if action_option_1 == self.ACTION_GO_RIGHT:
                 next_x = x + 1
             else:
                 next_x = x - 1
             energy_option_1 = self.getMinEnergyFromSrc2Des(next_x, y, des_x, des_y, action_option_1, action_option_2)
-        if x != des_x:
+        if y != des_y:
             if action_option_2 == self.ACTION_GO_DOWN:
                 next_y = y + 1
             else:
@@ -400,7 +400,7 @@ class MyBot:
                                                                action_option_1, action_option_2)
                 energy_action_2 = self.getMinEnergyFromSrc2Des(my_bot_x, next_my_bot_y, des_x, des_y,
                                                                action_option_1, action_option_2)
-                if energy_action_1 > energy_action_2:
+                if energy_action_1 <= energy_action_2:
                     n_action = action_option_1
                     require_energy = self.getEnergyAtPosition(next_my_bot_x, my_bot_y)
                 else:
