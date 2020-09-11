@@ -53,6 +53,13 @@ class MyBot:
         # it indicates the game ends or is playing
         return self.state.status != State.STATUS_PLAYING
 
+    def get_num_of_gold_position(self):
+        num_of_gold_position = 0
+        for gold in self.state.mapInfo.golds:
+            if gold["amount"] > 0:
+                num_of_gold_position += 1
+        return num_of_gold_position
+
     def get_num_of_players_at_position(self, x, y, initial_flag=False):
         num_of_players = 0
         for player in self.state.players:
@@ -451,6 +458,17 @@ class MyBot:
         n_action = self.ACTION_FREE
         energy = self.state.energy
         gold_on_ground = self.myGetGoldAmount(my_bot_x, my_bot_y, initial_flag, are_we_here=True)
+        remain_steps = 100 - self.steps
+
+        if gold_on_ground > 0:
+            if remain_steps <= (gold_on_ground // 50 + 1) or self.get_num_of_gold_position() == 1:
+                if remain_steps == 1:
+                    return self.ACTION_CRAFT
+                else:
+                    if energy <= 5:
+                        return self.ACTION_FREE
+                    else:
+                        return self.ACTION_CRAFT
 
         if gold_on_ground >= 50:
             if energy <= 5:
@@ -472,7 +490,7 @@ class MyBot:
                 n_action = self.ACTION_CRAFT
         else:
             # free if distance to nearest fold >= remain steps
-            if self.findNearestGold(my_bot_x, my_bot_y) >= 100 - self.steps:
+            if self.findNearestGold(my_bot_x, my_bot_y) >= remain_steps:
                 n_action = self.ACTION_FREE
             else:
                 leftOrRight = 2
