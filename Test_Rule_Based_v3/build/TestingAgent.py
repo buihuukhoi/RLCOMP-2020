@@ -286,6 +286,7 @@ class MyBot:
 
     def getEnergyAtPosition(self, x, y):
         energy = 1
+        tmp_type = 0
         gold = self.state.mapInfo.gold_amount(x, y)
         if gold > 0:
             energy = 4
@@ -294,14 +295,16 @@ class MyBot:
                 i = obstacle["posx"]
                 j = obstacle["posy"]
                 if i == x and j == y:
-                    if obstacle["type"] == 1:  # Tree
+                    tmp_type = obstacle["type"]
+                    if tmp_type == 1:  # Tree
                         energy = 20
-                    elif obstacle["type"] == 2:  # Trap
+                    elif tmp_type == 2:  # Trap
                         if obstacle["value"] == -10:
                             energy = 10
-                    elif obstacle["type"] == 3:  # Swamp
+                    elif tmp_type == 3:  # Swamp
                         energy = -obstacle["value"]
-        return energy
+                    break
+        return energy, tmp_type
 
     def getMinEnergyFromSrc2Des(self, x, y, des_x, des_y, action_option_1, action_option_2):
         if x == des_x and y == des_y:
@@ -309,7 +312,7 @@ class MyBot:
 
         # get energy at (x,y)
         energy = 1
-        energy = self.getEnergyAtPosition(x, y)
+        energy, tmp_type = self.getEnergyAtPosition(x, y)
 
         energy_option_1 = 100000
         energy_option_2 = 100000
@@ -433,22 +436,22 @@ class MyBot:
                                                                action_option_1, action_option_2)
                 if energy_action_1 <= energy_action_2:
                     n_action = action_option_1
-                    require_energy = self.getEnergyAtPosition(next_my_bot_x, my_bot_y)
+                    require_energy, tmp_type = self.getEnergyAtPosition(next_my_bot_x, my_bot_y)
                 else:
                     n_action = action_option_2
-                    require_energy = self.getEnergyAtPosition(my_bot_x, next_my_bot_y)
+                    require_energy, tmp_type = self.getEnergyAtPosition(my_bot_x, next_my_bot_y)
 
                 if self.state.energy <= require_energy:
                     n_action = self.ACTION_FREE
-                elif require_energy != 5 and self.pre_action == self.ACTION_FREE and self.state.energy < 38 and self.steps < 70:
+                elif tmp_type != 3 and self.pre_action == self.ACTION_FREE and self.state.energy < 38 and self.steps < 70:
                     return self.ACTION_FREE
             return n_action
 
         require_energy = 1
-        require_energy = self.getEnergyAtPosition(next_my_bot_x, next_my_bot_y)
+        require_energy, tmp_type = self.getEnergyAtPosition(next_my_bot_x, next_my_bot_y)
         if self.state.energy <= require_energy:
             n_action = self.ACTION_FREE
-        elif require_energy != 5 and self.pre_action == self.ACTION_FREE and self.state.energy < 38 and self.steps < 70:
+        elif tmp_type != 3 and self.pre_action == self.ACTION_FREE and self.state.energy < 38 and self.steps < 70:
             return self.ACTION_FREE
 
         return n_action
