@@ -433,12 +433,16 @@ class MyBot:
 
                 if self.state.energy <= require_energy:
                     n_action = self.ACTION_FREE
+                elif require_energy != 5 and self.pre_action == self.ACTION_FREE and self.state.energy < 38 and self.steps < 60:
+                    return self.ACTION_FREE
             return n_action
 
         require_energy = 1
         require_energy = self.getEnergyAtPosition(next_my_bot_x, next_my_bot_y)
         if self.state.energy <= require_energy:
             n_action = self.ACTION_FREE
+        elif require_energy != 5 and self.pre_action == self.ACTION_FREE and self.state.energy < 38 and self.steps < 60:
+            return self.ACTION_FREE
 
         return n_action
 
@@ -446,13 +450,12 @@ class MyBot:
         my_bot_x, my_bot_y = self.state.x, self.state.y
         n_action = self.ACTION_FREE
         energy = self.state.energy
-
-        if self.pre_action == self.ACTION_FREE and energy < 38 and self.steps < 60:
-            return self.ACTION_FREE
-
         gold_on_ground = self.myGetGoldAmount(my_bot_x, my_bot_y, initial_flag, are_we_here=True)
 
         if gold_on_ground >= 50:
+            if self.pre_action == self.ACTION_FREE and energy < 38 and self.steps < 60:
+                return self.ACTION_FREE
+
             if energy <= 5:
                 n_action = self.ACTION_FREE
             elif energy >= (gold_on_ground/50)*5:
@@ -462,6 +465,9 @@ class MyBot:
             else:
                 n_action = self.ACTION_CRAFT
         elif gold_on_ground > 0 and self.steps > 50:
+            if self.pre_action == self.ACTION_FREE and energy < 38 and self.steps < 60:
+                return self.ACTION_FREE
+
             if energy <= 5:
                 n_action = self.ACTION_FREE
             elif energy >= (gold_on_ground/50)*5:
