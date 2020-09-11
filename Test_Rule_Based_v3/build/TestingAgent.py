@@ -244,20 +244,21 @@ class MyBot:
         while x != des_x + next_step_x:
             while y != des_y + next_step_y:
                 if x != des_x or y != des_y:
-                    gold_amount = self.myGetGoldAmount(x, y)
-                    if gold_amount > 0:
-                        if gold_amount > max_gold:
-                            largest_gold_x = x
-                            largest_gold_y = y
-                            max_gold = gold_amount
-                        elif gold_amount == max_gold:
-                            prev_distance = (largest_gold_x - self.state.x) * (largest_gold_x - self.state.x) + \
-                                            (largest_gold_y - self.state.y) * (largest_gold_y - self.state.y)
-                            new_distance = (x - self.state.x) * (x - self.state.x) + (y - self.state.y) * (y - self.state.y)
-                            if new_distance < prev_distance:
+                    if self.state.x != x or self.state.y != y:
+                        gold_amount = self.myGetGoldAmount(x, y)
+                        if gold_amount > 0:
+                            if gold_amount > max_gold:
                                 largest_gold_x = x
                                 largest_gold_y = y
                                 max_gold = gold_amount
+                            elif gold_amount == max_gold:
+                                prev_distance = (largest_gold_x - self.state.x) * (largest_gold_x - self.state.x) + \
+                                                (largest_gold_y - self.state.y) * (largest_gold_y - self.state.y)
+                                new_distance = (x - self.state.x) * (x - self.state.x) + (y - self.state.y) * (y - self.state.y)
+                                if new_distance < prev_distance:
+                                    largest_gold_x = x
+                                    largest_gold_y = y
+                                    max_gold = gold_amount
                 y += next_step_y
             y = self.state.y
             x += next_step_x
@@ -444,7 +445,7 @@ class MyBot:
                 n_action = self.ACTION_FREE
             else:
                 n_action = self.ACTION_CRAFT
-        elif gold_on_ground > 0 and 100 - self.steps > 50:
+        elif gold_on_ground > 0 and self.steps > 50:
             if energy <= 5:
                 n_action = self.ACTION_FREE
             elif energy >= (gold_on_ground/50)*5:
