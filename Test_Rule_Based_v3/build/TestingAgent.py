@@ -433,7 +433,7 @@ class MyBot:
 
                 if self.state.energy <= require_energy:
                     n_action = self.ACTION_FREE
-                elif require_energy != 5 and self.pre_action == self.ACTION_FREE and self.state.energy < 38 and self.steps < 60:
+                elif require_energy != 5 and self.pre_action == self.ACTION_FREE and self.state.energy < 38 and self.steps < 70:
                     return self.ACTION_FREE
             return n_action
 
@@ -441,7 +441,7 @@ class MyBot:
         require_energy = self.getEnergyAtPosition(next_my_bot_x, next_my_bot_y)
         if self.state.energy <= require_energy:
             n_action = self.ACTION_FREE
-        elif require_energy != 5 and self.pre_action == self.ACTION_FREE and self.state.energy < 38 and self.steps < 60:
+        elif require_energy != 5 and self.pre_action == self.ACTION_FREE and self.state.energy < 38 and self.steps < 70:
             return self.ACTION_FREE
 
         return n_action
@@ -453,10 +453,9 @@ class MyBot:
         gold_on_ground = self.myGetGoldAmount(my_bot_x, my_bot_y, initial_flag, are_we_here=True)
 
         if gold_on_ground >= 50:
-            if self.pre_action == self.ACTION_FREE and energy < 38 and self.steps < 60:
-                return self.ACTION_FREE
-
-            if energy <= 5:
+            if self.pre_action == self.ACTION_FREE and energy < 38 and self.steps < 70:
+                n_action = self.ACTION_FREE
+            elif energy <= 5:
                 n_action = self.ACTION_FREE
             elif energy >= (gold_on_ground/50)*5:
                 n_action = self.ACTION_CRAFT
@@ -465,10 +464,9 @@ class MyBot:
             else:
                 n_action = self.ACTION_CRAFT
         elif gold_on_ground > 0 and self.steps > 50:
-            if self.pre_action == self.ACTION_FREE and energy < 38 and self.steps < 60:
-                return self.ACTION_FREE
-
-            if energy <= 5:
+            if self.pre_action == self.ACTION_FREE and energy < 38 and self.steps < 70:
+                n_action = self.ACTION_FREE
+            elif energy <= 5:
                 n_action = self.ACTION_FREE
             elif energy >= (gold_on_ground/50)*5:
                 n_action = self.ACTION_CRAFT
@@ -479,22 +477,22 @@ class MyBot:
         else:
             # free if distance to nearest fold >= remain steps
             if self.findNearestGold(my_bot_x, my_bot_y) >= 100 - self.steps:
-                return self.ACTION_FREE
+                n_action = self.ACTION_FREE
+            else:
+                leftOrRight = 2
+                if self.steps < 50:
+                    leftOrRight = self.goLeftOrRight(my_bot_x, my_bot_y, initial_flag)
+                largest_gold_x, largest_gold_y = self.findLargestGold(initial_flag, leftOrRight)
+                target_x = largest_gold_x
+                target_y = largest_gold_y
+                while True:
+                    tmp_x, tmp_y = self.findLargestGoldInSmallMap(target_x, target_y)
+                    if (tmp_x is None) or (tmp_y is None):
+                        break
+                    target_x = tmp_x
+                    target_y = tmp_y
 
-            leftOrRight = 2
-            if self.steps < 50:
-                leftOrRight = self.goLeftOrRight(my_bot_x, my_bot_y, initial_flag)
-            largest_gold_x, largest_gold_y = self.findLargestGold(initial_flag, leftOrRight)
-            target_x = largest_gold_x
-            target_y = largest_gold_y
-            while True:
-                tmp_x, tmp_y = self.findLargestGoldInSmallMap(target_x, target_y)
-                if (tmp_x is None) or (tmp_y is None):
-                    break
-                target_x = tmp_x
-                target_y = tmp_y
-
-            n_action = self.goToTarget(target_x, target_y)
+                n_action = self.goToTarget(target_x, target_y)
 
         self.steps += 1
         self.pre_action = n_action
