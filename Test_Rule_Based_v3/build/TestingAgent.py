@@ -53,6 +53,18 @@ class MyBot:
         # it indicates the game ends or is playing
         return self.state.status != State.STATUS_PLAYING
 
+    def get_num_of_players_at_position(self, x, y, initial_flag=False):
+        num_of_players = 0
+        for player in self.state.players:
+            if "energy" in player:
+                if player["status"] == self.state.STATUS_PLAYING:
+                    if player["posx"] == x and player["posy"] == y:
+                        num_of_players += 1
+            elif initial_flag:  # 0 step, initial state
+                if player["posx"] == x and player["posy"] == y:
+                    num_of_players += 1
+        return num_of_players
+
     def findNearestGold(self, my_bot_x, my_bot_y):
         min_distance = 100
         for gold in self.state.mapInfo.golds:
@@ -433,8 +445,12 @@ class MyBot:
     def next_action(self, initial_flag=False):
         my_bot_x, my_bot_y = self.state.x, self.state.y
         n_action = self.ACTION_FREE
-        gold_on_ground = self.myGetGoldAmount(my_bot_x, my_bot_y, initial_flag, are_we_here=True)
         energy = self.state.energy
+
+        if self.pre_action == self.ACTION_FREE and energy < 38 and self.steps < 60:
+            return self.ACTION_FREE
+
+        gold_on_ground = self.myGetGoldAmount(my_bot_x, my_bot_y, initial_flag, are_we_here=True)
 
         if gold_on_ground >= 50:
             if energy <= 5:
