@@ -498,7 +498,7 @@ class MyBot:
             else:
                 leftOrRight = 2
                 #if self.steps < 50:
-                if self.steps < 20:
+                if self.steps < 16:
                     leftOrRight = self.goLeftOrRight(my_bot_x, my_bot_y, initial_flag)
                 largest_gold_x, largest_gold_y = self.findLargestGold(initial_flag, leftOrRight)
                 target_x = largest_gold_x
