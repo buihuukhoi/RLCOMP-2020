@@ -406,10 +406,12 @@ class MyBot:
         tmp_action_2 = self.ACTION_FREE
 
         if my_bot_x == des_x:
-            tmp_my_bot_x_1 += 1
-            tmp_action_1 = self.ACTION_GO_RIGHT
-            tmp_my_bot_x_2 -= 1
-            tmp_action_2 = self.ACTION_GO_LEFT
+            if 0 <= (tmp_my_bot_x_1 + 1) <= self.state.mapInfo.max_x:
+                tmp_my_bot_x_1 += 1
+                tmp_action_1 = self.ACTION_GO_RIGHT
+            if 0 <= (tmp_my_bot_x_2 - 1) <= self.state.mapInfo.max_x:
+                tmp_my_bot_x_2 -= 1
+                tmp_action_2 = self.ACTION_GO_LEFT
             if my_bot_y < des_y:
                 n_action = self.ACTION_GO_DOWN
                 next_my_bot_y += 1
@@ -417,10 +419,12 @@ class MyBot:
                 n_action = self.ACTION_GO_UP
                 next_my_bot_y -= 1
         elif my_bot_y == des_y:
-            tmp_my_bot_y_1 += 1
-            tmp_action_1 = self.ACTION_GO_DOWN
-            tmp_my_bot_y_2 -= 1
-            tmp_action_1 = self.ACTION_GO_UP
+            if 0 <= (tmp_my_bot_y_1 + 1) <= self.state.mapInfo.max_y:
+                tmp_my_bot_y_1 += 1
+                tmp_action_1 = self.ACTION_GO_DOWN
+            if 0 <= (tmp_my_bot_y_2 - 1) <= self.state.mapInfo.max_y:
+                tmp_my_bot_y_2 -= 1
+                tmp_action_2 = self.ACTION_GO_UP
             if my_bot_x < des_x:
                 n_action = self.ACTION_GO_RIGHT
                 next_my_bot_x += 1
@@ -465,7 +469,7 @@ class MyBot:
 
         require_energy = 1
         require_energy, tmp_type = self.getEnergyAtPosition(next_my_bot_x, next_my_bot_y)
-        if require_energy > 50:  # ==100
+        if require_energy >= 50:  # ==100
             tmp_require_energy_1, tmp_type_1 = self.getEnergyAtPosition(tmp_my_bot_x_1, tmp_my_bot_y_1)
             tmp_require_energy_2, tmp_type_2 = self.getEnergyAtPosition(tmp_my_bot_x_2, tmp_my_bot_y_2)
             tmp_require_energy = tmp_require_energy_1
