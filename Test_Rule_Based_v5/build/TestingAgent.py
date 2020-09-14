@@ -503,12 +503,15 @@ class MyBot:
         if gold_on_ground > 0:
             if remain_steps <= (gold_on_ground // 50 + 1) or self.get_num_of_gold_position() == 1:
                 if remain_steps == 1:
-                    return self.ACTION_CRAFT
+                    n_action = self.ACTION_CRAFT
                 else:
                     if energy <= 5:
-                        return self.ACTION_FREE
+                        n_action = self.ACTION_FREE
                     else:
-                        return self.ACTION_CRAFT
+                        n_action = self.ACTION_CRAFT
+                self.steps += 1
+                self.pre_action = n_action
+                return n_action
 
         if gold_on_ground >= 50:
             if energy <= 5:
