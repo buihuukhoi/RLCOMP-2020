@@ -546,12 +546,12 @@ class MyBot:
                 if self.largest_gold_x != -1 and self.largest_gold_y != -1:
                     if self.get_num_of_players_at_position(self.largest_gold_x, self.largest_gold_y, initial_flag) > 0:
                         self.search_left_right = True
-                if self.steps < 70 and self.search_left_right == True:
+                if self.steps < 75 and self.search_left_right == True:
                 #if self.steps < 50:
                 #if self.steps < 16:
                     self.left_or_right = self.goLeftOrRight(my_bot_x, my_bot_y, initial_flag)
                     self.search_left_right = False
-                elif self.steps >= 70:
+                elif self.steps >= 75:
                     self.left_or_right = 2
                 largest_gold_x, largest_gold_y = self.findLargestGold(initial_flag, self.left_or_right)
                 self.largest_gold_x = largest_gold_x
