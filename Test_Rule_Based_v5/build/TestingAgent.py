@@ -318,6 +318,8 @@ class MyBot:
         # get energy at (x,y)
         energy = 1
         energy, tmp_type = self.getEnergyAtPosition(x, y)
+        if energy == 100:
+            energy = 10000
 
         energy_option_1 = 100000
         energy_option_2 = 100000
