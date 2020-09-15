@@ -60,6 +60,31 @@ class MyBot:
         # it indicates the game ends or is playing
         return self.state.status != State.STATUS_PLAYING
 
+    def getTotalGoldBetweenTwoPoints(self, src_x, src_y, des_x, des_y):
+        total_gold = 0
+        start_x = src_x
+        end_x = des_x
+        start_y = src_y
+        end_y = des_y
+        if src_x < des_x:
+            start_x = src_x
+            end_x = des_x
+        elif src_x > des_x:
+            start_x = des_x
+            end_x = src_x
+        if src_y < des_y:
+            start_y = src_y
+            end_y = des_y
+        elif src_y > des_y:
+            start_y = des_y
+            end_y = src_y
+
+        for gold in self.state.mapInfo.golds:
+            if (start_x < gold["posx"] < end_x) and (start_y < gold["posy"] < end_y):
+                total_gold += gold["amount"]
+
+        return total_gold
+
     def get_num_of_gold_position(self):
         num_of_gold_position = 0
         for gold in self.state.mapInfo.golds:
@@ -171,7 +196,7 @@ class MyBot:
 
                                 #gold_amount = (goal["amount"] / (count_players + 1)) - (distance * 50) - (50 * count_players * distance)
                                 gold_amount = (goal["amount"] - (count_players * distance * 50)) / (count_players + 1) - (distance * 50)
-
+                                gold_amount += self.getTotalGoldBetweenTwoPoints(my_bot_x, my_bot_y, i, j)
                                 if gold_amount > max_gold:
                                     largest_gold_x = i
                                     largest_gold_y = j
@@ -201,7 +226,7 @@ class MyBot:
                                     #gold_amount = (goal["amount"] / (count_players + 1)) - (distance * 50) - (
                                     #            50 * count_players * distance)
                                     gold_amount = (goal["amount"] - (count_players * distance * 50)) / (count_players + 1) - (distance * 50)
-
+                                    gold_amount += self.getTotalGoldBetweenTwoPoints(my_bot_x, my_bot_y, i, j)
                                     if gold_amount > max_gold:
                                         largest_gold_x = i
                                         largest_gold_y = j
@@ -231,7 +256,7 @@ class MyBot:
                                     #gold_amount = (goal["amount"] / (count_players + 1)) - (distance * 50) - (
                                     #        50 * count_players * distance)
                                     gold_amount = (goal["amount"] - (count_players * distance * 50)) / (count_players + 1) - (distance * 50)
-
+                                    gold_amount += self.getTotalGoldBetweenTwoPoints(my_bot_x, my_bot_y, i, j)
                                     if gold_amount > max_gold:
                                         largest_gold_x = i
                                         largest_gold_y = j
