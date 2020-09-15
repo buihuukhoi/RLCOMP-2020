@@ -554,6 +554,13 @@ class MyBot:
                 elif self.steps >= 75:
                     self.left_or_right = 2
                 largest_gold_x, largest_gold_y = self.findLargestGold(initial_flag, self.left_or_right)
+                if largest_gold_x < 0 or largest_gold_y < 0:
+                    n_action = self.ACTION_FREE
+                    self.steps += 1
+                    self.pre_action = n_action
+                    self.pre_x = my_bot_x
+                    self.pre_y = my_bot_y
+                    return n_action
                 self.largest_gold_x = largest_gold_x
                 self.largest_gold_y = largest_gold_y
 
