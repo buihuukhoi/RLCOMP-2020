@@ -144,7 +144,7 @@ class MyBot:
         else:
             return gold_on_ground / (count_players + 1) - (distance * 50) - (50 * count_players * distance)  # +1 because assuming that we will come here
 
-    def findLargestGold(self, initial_flag=False, leftOrRight=2):
+    def findLargestGold(self, steps, initial_flag=False, leftOrRight=2):
         my_bot_x, my_bot_y = self.state.x, self.state.y
         largest_gold_x = -1
         largest_gold_y = -1
@@ -153,45 +153,12 @@ class MyBot:
         for goal in self.state.mapInfo.golds:
             if goal["posx"] != my_bot_x or goal["posy"] != my_bot_y:
                 if goal["posx"] != self.pre_x or goal["posy"] != self.pre_y:
-                    if leftOrRight == 2:
-                        if goal["amount"] > 0:
-                            i = goal["posx"]
-                            j = goal["posy"]
-
-                            distance = abs(i - self.state.x) + abs(j - self.state.y)
-
-                            count_players = 0
-                            for player in self.state.players:
-                                if player["posx"] == i and player["posy"] == j:
-                                    if "energy" in player:
-                                        if player["status"] == self.state.STATUS_PLAYING:
-                                            count_players += 1
-                                    elif initial_flag:  # 0 step, initial state
-                                        count_players += 1
-
-                            gold_amount = (goal["amount"] / (count_players + 1)) - (distance * 50) - (50 * count_players * distance)
-
-                            if gold_amount > max_gold:
-                                largest_gold_x = i
-                                largest_gold_y = j
-                                max_gold = gold_amount
-                            elif gold_amount == max_gold:
-                                prev_distance = (largest_gold_x - my_bot_x) * (largest_gold_x - my_bot_x) + \
-                                                (largest_gold_y - my_bot_y) * (largest_gold_y - my_bot_y)
-                                new_distance = (i - my_bot_x) * (i - my_bot_x) + (j - my_bot_y) * (j - my_bot_y)
-                                if new_distance < prev_distance:
-                                    largest_gold_x = i
-                                    largest_gold_y = j
-                                    max_gold = gold_amount
-
-                    # only search at left side
-                    if leftOrRight == 1:
-                        if goal["amount"] > 0:
-                            i = goal["posx"]
-                            j = goal["posy"]
-                            if i <= my_bot_x:
-                                distance = abs(i - self.state.x) + abs(j - self.state.y)
-
+                    i = goal["posx"]
+                    j = goal["posy"]
+                    distance = abs(i - self.state.x) + abs(j - self.state.y)
+                    if steps < 80 or 100 - steps > distance:
+                        if leftOrRight == 2:
+                            if goal["amount"] > 0:
                                 count_players = 0
                                 for player in self.state.players:
                                     if player["posx"] == i and player["posy"] == j:
@@ -201,54 +168,78 @@ class MyBot:
                                         elif initial_flag:  # 0 step, initial state
                                             count_players += 1
 
-                                gold_amount = (goal["amount"] / (count_players + 1)) - (distance * 50) - (
+                                gold_amount = (goal["amount"] / (count_players + 1)) - (distance * 50) - (50 * count_players * distance)
+
+                                if gold_amount > max_gold:
+                                    largest_gold_x = i
+                                    largest_gold_y = j
+                                    max_gold = gold_amount
+                                elif gold_amount == max_gold:
+                                    prev_distance = (largest_gold_x - my_bot_x) * (largest_gold_x - my_bot_x) + \
+                                                    (largest_gold_y - my_bot_y) * (largest_gold_y - my_bot_y)
+                                    new_distance = (i - my_bot_x) * (i - my_bot_x) + (j - my_bot_y) * (j - my_bot_y)
+                                    if new_distance < prev_distance:
+                                        largest_gold_x = i
+                                        largest_gold_y = j
+                                        max_gold = gold_amount
+
+                        # only search at left side
+                        if leftOrRight == 1:
+                            if goal["amount"] > 0:
+                                if i <= my_bot_x:
+                                    count_players = 0
+                                    for player in self.state.players:
+                                        if player["posx"] == i and player["posy"] == j:
+                                            if "energy" in player:
+                                                if player["status"] == self.state.STATUS_PLAYING:
+                                                    count_players += 1
+                                            elif initial_flag:  # 0 step, initial state
+                                                count_players += 1
+
+                                    gold_amount = (goal["amount"] / (count_players + 1)) - (distance * 50) - (
+                                                50 * count_players * distance)
+
+                                    if gold_amount > max_gold:
+                                        largest_gold_x = i
+                                        largest_gold_y = j
+                                        max_gold = gold_amount
+                                    elif gold_amount == max_gold:
+                                        prev_distance = (largest_gold_x - my_bot_x) * (largest_gold_x - my_bot_x) + \
+                                                        (largest_gold_y - my_bot_y) * (largest_gold_y - my_bot_y)
+                                        new_distance = (i - my_bot_x) * (i - my_bot_x) + (j - my_bot_y) * (j - my_bot_y)
+                                        if new_distance < prev_distance:
+                                            largest_gold_x = i
+                                            largest_gold_y = j
+                                            max_gold = gold_amount
+
+                        # only search at right side
+                        if leftOrRight == 3:
+                            if goal["amount"] > 0:
+                                if i >= my_bot_x:
+                                    count_players = 0
+                                    for player in self.state.players:
+                                        if player["posx"] == i and player["posy"] == j:
+                                            if "energy" in player:
+                                                if player["status"] == self.state.STATUS_PLAYING:
+                                                    count_players += 1
+                                            elif initial_flag:  # 0 step, initial state
+                                                count_players += 1
+
+                                    gold_amount = (goal["amount"] / (count_players + 1)) - (distance * 50) - (
                                             50 * count_players * distance)
 
-                                if gold_amount > max_gold:
-                                    largest_gold_x = i
-                                    largest_gold_y = j
-                                    max_gold = gold_amount
-                                elif gold_amount == max_gold:
-                                    prev_distance = (largest_gold_x - my_bot_x) * (largest_gold_x - my_bot_x) + \
-                                                    (largest_gold_y - my_bot_y) * (largest_gold_y - my_bot_y)
-                                    new_distance = (i - my_bot_x) * (i - my_bot_x) + (j - my_bot_y) * (j - my_bot_y)
-                                    if new_distance < prev_distance:
+                                    if gold_amount > max_gold:
                                         largest_gold_x = i
                                         largest_gold_y = j
                                         max_gold = gold_amount
-
-                    # only search at right side
-                    if leftOrRight == 3:
-                        if goal["amount"] > 0:
-                            i = goal["posx"]
-                            j = goal["posy"]
-                            if i >= my_bot_x:
-                                distance = abs(i - self.state.x) + abs(j - self.state.y)
-
-                                count_players = 0
-                                for player in self.state.players:
-                                    if player["posx"] == i and player["posy"] == j:
-                                        if "energy" in player:
-                                            if player["status"] == self.state.STATUS_PLAYING:
-                                                count_players += 1
-                                        elif initial_flag:  # 0 step, initial state
-                                            count_players += 1
-
-                                gold_amount = (goal["amount"] / (count_players + 1)) - (distance * 50) - (
-                                        50 * count_players * distance)
-
-                                if gold_amount > max_gold:
-                                    largest_gold_x = i
-                                    largest_gold_y = j
-                                    max_gold = gold_amount
-                                elif gold_amount == max_gold:
-                                    prev_distance = (largest_gold_x - my_bot_x) * (largest_gold_x - my_bot_x) + \
-                                                    (largest_gold_y - my_bot_y) * (largest_gold_y - my_bot_y)
-                                    new_distance = (i - my_bot_x) * (i - my_bot_x) + (j - my_bot_y) * (j - my_bot_y)
-                                    if new_distance < prev_distance:
-                                        largest_gold_x = i
-                                        largest_gold_y = j
-                                        max_gold = gold_amount
+                                    elif gold_amount == max_gold:
+                                        prev_distance = (largest_gold_x - my_bot_x) * (largest_gold_x - my_bot_x) + \
+                                                        (largest_gold_y - my_bot_y) * (largest_gold_y - my_bot_y)
+                                        new_distance = (i - my_bot_x) * (i - my_bot_x) + (j - my_bot_y) * (j - my_bot_y)
+                                        if new_distance < prev_distance:
+                                            largest_gold_x = i
+                                            largest_gold_y = j
+                                            max_gold = gold_amount
 
         return largest_gold_x, largest_gold_y
 
@@ -553,7 +544,7 @@ class MyBot:
                     self.search_left_right = False
                 elif self.steps >= 80:
                     self.left_or_right = 2
-                largest_gold_x, largest_gold_y = self.findLargestGold(initial_flag, self.left_or_right)
+                largest_gold_x, largest_gold_y = self.findLargestGold(self.steps, initial_flag, self.left_or_right)
                 if largest_gold_x < 0 or largest_gold_y < 0:
                     n_action = self.ACTION_FREE
                     self.steps += 1
