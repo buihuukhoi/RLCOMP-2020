@@ -142,7 +142,8 @@ class MyBot:
         if are_we_here:
             return gold_on_ground / count_players
         else:
-            return gold_on_ground / (count_players + 1) - (distance * 50) - (50 * count_players * distance)  # +1 because assuming that we will come here
+            return (gold_on_ground - (count_players * distance * 50)) / (count_players + 1) - (distance * 50)
+            #return gold_on_ground / (count_players + 1) - (distance * 50) - (50 * count_players * distance)  # +1 because assuming that we will come here
 
     def findLargestGold(self, steps, initial_flag=False, leftOrRight=2):
         my_bot_x, my_bot_y = self.state.x, self.state.y
@@ -168,7 +169,8 @@ class MyBot:
                                         elif initial_flag:  # 0 step, initial state
                                             count_players += 1
 
-                                gold_amount = (goal["amount"] / (count_players + 1)) - (distance * 50) - (50 * count_players * distance)
+                                #gold_amount = (goal["amount"] / (count_players + 1)) - (distance * 50) - (50 * count_players * distance)
+                                gold_amount = (goal["amount"] - (count_players * distance * 50)) / (count_players + 1) - (distance * 50)
 
                                 if gold_amount > max_gold:
                                     largest_gold_x = i
@@ -196,8 +198,9 @@ class MyBot:
                                             elif initial_flag:  # 0 step, initial state
                                                 count_players += 1
 
-                                    gold_amount = (goal["amount"] / (count_players + 1)) - (distance * 50) - (
-                                                50 * count_players * distance)
+                                    #gold_amount = (goal["amount"] / (count_players + 1)) - (distance * 50) - (
+                                    #            50 * count_players * distance)
+                                    gold_amount = (goal["amount"] - (count_players * distance * 50)) / (count_players + 1) - (distance * 50)
 
                                     if gold_amount > max_gold:
                                         largest_gold_x = i
@@ -225,8 +228,9 @@ class MyBot:
                                             elif initial_flag:  # 0 step, initial state
                                                 count_players += 1
 
-                                    gold_amount = (goal["amount"] / (count_players + 1)) - (distance * 50) - (
-                                            50 * count_players * distance)
+                                    #gold_amount = (goal["amount"] / (count_players + 1)) - (distance * 50) - (
+                                    #        50 * count_players * distance)
+                                    gold_amount = (goal["amount"] - (count_players * distance * 50)) / (count_players + 1) - (distance * 50)
 
                                     if gold_amount > max_gold:
                                         largest_gold_x = i
@@ -520,7 +524,7 @@ class MyBot:
                 n_action = self.ACTION_FREE
             else:
                 n_action = self.ACTION_CRAFT
-        elif gold_on_ground > 0 and self.steps > 50:
+        elif gold_on_ground > 0 and self.steps > 80:
             if energy <= 5:
                 n_action = self.ACTION_FREE
             elif energy >= (gold_on_ground/50)*5:
