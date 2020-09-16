@@ -60,7 +60,7 @@ class MyBot:
         # it indicates the game ends or is playing
         return self.state.status != State.STATUS_PLAYING
 
-    def getTotalGoldBetweenTwoPoints(self, src_x, src_y, des_x, des_y):
+    def getTotalGoldBetweenTwoPoints(self, src_x, src_y, des_x, des_y, initial_flag=False):
         total_gold = 0
         start_x = src_x
         end_x = des_x
@@ -80,8 +80,21 @@ class MyBot:
             end_y = src_y
 
         for gold in self.state.mapInfo.golds:
+            x = gold["posx"]
+            y = gold["posy"]
             if (start_x < gold["posx"] < end_x) and (start_y < gold["posy"] < end_y):
-                total_gold += gold["amount"]
+                gold_on_ground = gold["amount"]
+
+                distance = abs(x - self.state.x) + abs(y - self.state.y)
+                count_players = 0
+                for player in self.state.players:
+                    if player["posx"] == x and player["posy"] == y:
+                        if "energy" in player:
+                            if player["status"] == self.state.STATUS_PLAYING:
+                                count_players += 1
+                        elif initial_flag:  # 0 step, initial state
+                            count_players += 1
+                    total_gold += (gold_on_ground - (count_players * distance * 50)) / (count_players + 1)
 
         return total_gold
 
