@@ -575,6 +575,7 @@ class MyBot:
                     self.left_or_right = 2
                 largest_gold_x, largest_gold_y = self.findLargestGold(self.steps, initial_flag, self.left_or_right)
                 if largest_gold_x < 0 or largest_gold_y < 0:
+                    self.left_or_right = 2
                     n_action = self.ACTION_FREE
                     self.steps += 1
                     self.pre_action = n_action
