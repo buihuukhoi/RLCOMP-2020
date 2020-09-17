@@ -507,8 +507,9 @@ class MyBot:
 
                 if self.state.energy <= require_energy:
                     n_action = self.ACTION_FREE
-                elif tmp_type != 3 and self.pre_action == self.ACTION_FREE and self.state.energy < 38 and self.steps < 70:
-                    return self.ACTION_FREE
+                elif tmp_type != 3 and require_energy != 4:
+                    if self.pre_action == self.ACTION_FREE and self.state.energy < 38 and self.steps < 70:
+                        return self.ACTION_FREE
             return n_action
 
         require_energy = 1
@@ -527,8 +528,9 @@ class MyBot:
                 return tmp_action
         if self.state.energy <= require_energy:
             n_action = self.ACTION_FREE
-        elif tmp_type != 3 and self.pre_action == self.ACTION_FREE and self.state.energy < 38 and self.steps < 70:
-            return self.ACTION_FREE
+        elif tmp_type != 3 and require_energy != 4:
+            if self.pre_action == self.ACTION_FREE and self.state.energy < 38 and self.steps < 70:
+                return self.ACTION_FREE
 
         return n_action
 
