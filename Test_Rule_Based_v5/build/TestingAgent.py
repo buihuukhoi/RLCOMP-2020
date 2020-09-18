@@ -190,6 +190,7 @@ class MyBot:
         my_bot_x, my_bot_y = self.state.x, self.state.y
         largest_gold_x = -1
         largest_gold_y = -1
+        pre_gold = 0
 
         max_gold = -100000
         for goal in self.state.mapInfo.golds:
@@ -217,14 +218,17 @@ class MyBot:
                                     largest_gold_x = i
                                     largest_gold_y = j
                                     max_gold = gold_amount
+                                    pre_gold = goal["amount"]
                                 elif gold_amount == max_gold:
-                                    prev_distance = (largest_gold_x - my_bot_x) * (largest_gold_x - my_bot_x) + \
-                                                    (largest_gold_y - my_bot_y) * (largest_gold_y - my_bot_y)
-                                    new_distance = (i - my_bot_x) * (i - my_bot_x) + (j - my_bot_y) * (j - my_bot_y)
-                                    if new_distance < prev_distance:
+                                    if goal["amount"] > pre_gold:
+                                        # prev_distance = (largest_gold_x - my_bot_x) * (largest_gold_x - my_bot_x) + \
+                                        #                (largest_gold_y - my_bot_y) * (largest_gold_y - my_bot_y)
+                                        # new_distance = (i - my_bot_x) * (i - my_bot_x) + (j - my_bot_y) * (j - my_bot_y)
+                                        # if new_distance < prev_distance:
                                         largest_gold_x = i
                                         largest_gold_y = j
                                         max_gold = gold_amount
+                                        pre_gold = goal["amount"]
 
                         # only search at left side
                         if leftOrRight == 1:
@@ -247,14 +251,17 @@ class MyBot:
                                         largest_gold_x = i
                                         largest_gold_y = j
                                         max_gold = gold_amount
+                                        pre_gold = goal["amount"]
                                     elif gold_amount == max_gold:
-                                        prev_distance = (largest_gold_x - my_bot_x) * (largest_gold_x - my_bot_x) + \
-                                                        (largest_gold_y - my_bot_y) * (largest_gold_y - my_bot_y)
-                                        new_distance = (i - my_bot_x) * (i - my_bot_x) + (j - my_bot_y) * (j - my_bot_y)
-                                        if new_distance < prev_distance:
+                                        if goal["amount"] > pre_gold:
+                                            #prev_distance = (largest_gold_x - my_bot_x) * (largest_gold_x - my_bot_x) + \
+                                            #                (largest_gold_y - my_bot_y) * (largest_gold_y - my_bot_y)
+                                            #new_distance = (i - my_bot_x) * (i - my_bot_x) + (j - my_bot_y) * (j - my_bot_y)
+                                            #if new_distance < prev_distance:
                                             largest_gold_x = i
                                             largest_gold_y = j
                                             max_gold = gold_amount
+                                            pre_gold = goal["amount"]
 
                         # only search at right side
                         if leftOrRight == 3:
@@ -277,14 +284,17 @@ class MyBot:
                                         largest_gold_x = i
                                         largest_gold_y = j
                                         max_gold = gold_amount
+                                        pre_gold = goal["amount"]
                                     elif gold_amount == max_gold:
-                                        prev_distance = (largest_gold_x - my_bot_x) * (largest_gold_x - my_bot_x) + \
-                                                        (largest_gold_y - my_bot_y) * (largest_gold_y - my_bot_y)
-                                        new_distance = (i - my_bot_x) * (i - my_bot_x) + (j - my_bot_y) * (j - my_bot_y)
-                                        if new_distance < prev_distance:
+                                        if goal["amount"] > pre_gold:
+                                            #prev_distance = (largest_gold_x - my_bot_x) * (largest_gold_x - my_bot_x) + \
+                                            #                (largest_gold_y - my_bot_y) * (largest_gold_y - my_bot_y)
+                                            #new_distance = (i - my_bot_x) * (i - my_bot_x) + (j - my_bot_y) * (j - my_bot_y)
+                                            #if new_distance < prev_distance:
                                             largest_gold_x = i
                                             largest_gold_y = j
                                             max_gold = gold_amount
+                                            pre_gold = goal["amount"]
 
         return largest_gold_x, largest_gold_y
 
@@ -294,6 +304,7 @@ class MyBot:
         largest_gold_y = None
         next_step_x = 0
         next_step_y = 0
+        pre_gold = 0
         if x < des_x:
             next_step_x = 1
         else:
@@ -314,14 +325,17 @@ class MyBot:
                                 largest_gold_x = x
                                 largest_gold_y = y
                                 max_gold = gold_amount
+                                pre_gold = self.state.mapInfo.gold_amount(x, y)
                             elif gold_amount == max_gold:
-                                prev_distance = (largest_gold_x - self.state.x) * (largest_gold_x - self.state.x) + \
-                                                (largest_gold_y - self.state.y) * (largest_gold_y - self.state.y)
-                                new_distance = (x - self.state.x) * (x - self.state.x) + (y - self.state.y) * (y - self.state.y)
-                                if new_distance < prev_distance:
+                                if self.state.mapInfo.gold_amount(x, y) > pre_gold:
+                                    #prev_distance = (largest_gold_x - self.state.x) * (largest_gold_x - self.state.x) + \
+                                    #                (largest_gold_y - self.state.y) * (largest_gold_y - self.state.y)
+                                    #new_distance = (x - self.state.x) * (x - self.state.x) + (y - self.state.y) * (y - self.state.y)
+                                    #if new_distance < prev_distance:
                                     largest_gold_x = x
                                     largest_gold_y = y
                                     max_gold = gold_amount
+                                    pre_gold = self.state.mapInfo.gold_amount(x, y)
                 y += next_step_y
             y = self.state.y
             x += next_step_x
