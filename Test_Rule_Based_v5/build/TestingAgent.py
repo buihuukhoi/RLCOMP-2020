@@ -82,20 +82,22 @@ class MyBot:
         for gold in self.state.mapInfo.golds:
             x = gold["posx"]
             y = gold["posy"]
-            if (start_x < gold["posx"] < end_x) and (start_y < gold["posy"] < end_y):
-                gold_on_ground = gold["amount"]
+            if x != des_x or y != des_y:
+                if x != src_x or y != src_y:
+                    if (start_x <= gold["posx"] <= end_x) and (start_y <= gold["posy"] <= end_y):
+                        gold_on_ground = gold["amount"]
 
-                distance = abs(x - self.state.x) + abs(y - self.state.y)
-                count_players = 0
-                for player in self.state.players:
-                    if player["posx"] == x and player["posy"] == y:
-                        if "energy" in player:
-                            if player["status"] == self.state.STATUS_PLAYING:
-                                count_players += 1
-                        elif initial_flag:  # 0 step, initial state
-                            count_players += 1
+                        distance = abs(x - self.state.x) + abs(y - self.state.y)
+                        count_players = 0
+                        for player in self.state.players:
+                            if player["posx"] == x and player["posy"] == y:
+                                if "energy" in player:
+                                    if player["status"] == self.state.STATUS_PLAYING:
+                                        count_players += 1
+                                elif initial_flag:  # 0 step, initial state
+                                    count_players += 1
 
-                total_gold += (gold_on_ground - (count_players * distance * 50)) / (count_players + 1)
+                        total_gold += (gold_on_ground - (count_players * distance * 50)) / (count_players + 1)
 
         return total_gold
 
@@ -507,8 +509,7 @@ class MyBot:
 
                 if self.state.energy <= require_energy:
                     n_action = self.ACTION_FREE
-                elif tmp_type != 3 and require_energy != 4:
-                    if self.pre_action == self.ACTION_FREE and self.state.energy < 38 and self.steps < 70:
+                elif tmp_type != 3 and self.pre_action == self.ACTION_FREE and self.state.energy < 38 and self.steps < 70:
                         return self.ACTION_FREE
             return n_action
 
@@ -528,8 +529,7 @@ class MyBot:
                 return tmp_action
         if self.state.energy <= require_energy:
             n_action = self.ACTION_FREE
-        elif tmp_type != 3 and require_energy != 4:
-            if self.pre_action == self.ACTION_FREE and self.state.energy < 38 and self.steps < 70:
+        elif tmp_type != 3 and self.pre_action == self.ACTION_FREE and self.state.energy < 38 and self.steps < 70:
                 return self.ACTION_FREE
 
         return n_action
