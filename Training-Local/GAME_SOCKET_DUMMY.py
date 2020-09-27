@@ -148,6 +148,7 @@ class GameSocket:
             self.bots = [Bot4(2), Bot2(3), Bot5(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
         else:
             self.bots = [Bot6(2), Bot5(3), Bot4(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
+        #self.bots = [Bot5(2), Bot6(3), Bot2(4)]  # use bot1(id=2), bot2(id=3), bot3(id=4)
         for (bot) in self.bots:  # at the beginning, all bots will have same position, energy as player
             bot.info.posx = self.user.posx
             bot.info.posy = self.user.posy
